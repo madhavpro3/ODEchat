@@ -1,0 +1,50 @@
+{
+  "query": "what is range of soluble HER2 concentration in cancer patients?",
+  "follow_up_questions": null,
+  "answer": "Soluble HER2 (sHER2) levels in cancer patients span a broad spectrum, with values reported as low as about 5ng/mL and extending well above 1ug/mL (e.g., up to 1425ng/mL in plasma of breast-cancer cohorts), while most clinical assays define a typical disease associated range of roughly 15-75ng/mL, and some studies have observed concentrations from 70ng/mL to over 210ng/mL in HER2-low breast‑cancer patients.",
+  "images": [],
+  "results": [
+    {
+      "url": "https://pubs.acs.org/doi/10.1021/acsmeasuresciau.2c00008",
+      "title": "Ultralow Limit Detection of Soluble HER2 Biomarker in Serum with a ...",
+      "content": "and its development stage. An important example of such biomarkers is human epidermal growth factor-2 (HER2), which belongs to the family of epidermal growth factor receptors. Overexpression of this protein is usually associated with the occurrence and progression of aggressive types of breast cancer. The detectable range for soluble HER2 in the serum of healthy individuals is 2–15 ng/mL and that in breast cancer patients is 15–75 ng/mL. (1,2);) Elevated levels of soluble HER2 in the saliva of [...] in diluted serum was 3.7 pg/mL, which is far below the current clinical detectable range for sHER (15–75 ng/mL for breast cancer patients). (1,2);) The difference between the LoD in buffer and diluted serum suggests that some of the serum components (could be endogenous sHER2) are likely to interfere with the sensor surface. Therefore, to differentiate the interference signal, the fiber was first stabilized in diluted serum, after which the known sHER concentrations in diluted serum were [...] performance for the detection of the breast cancer biomarker HER2. The immobilization of the antibody was achieved by silane coupling surface chemistry. The sensor exhibited a concentration-dependent response to increasing concentrations of sHER2 from 3 ag/mL to 128 ng/mL, with the lowest experimental detection threshold reported so far for sHER2. In addition to their small size and increased sensitivity, the fabrication of the TFBG–ball resonator sensors was relatively easy and robust. The",
+      "score": 0.8893851,
+      "raw_content": null,
+      "favicon": "https://pubs.acs.org/pb-assets/ux3/favicon-1635812676023.ico"
+    },
+    {
+      "url": "https://www.nature.com/articles/s41598-024-54590-z",
+      "title": "The unique monoclonal antibodies and immunochemical assay for ...",
+      "content": "Before analysis, the serum samples were diluted 2 times in the PBS, following the optimized ELISA protocol. Our results showed a variable amount of HER2 ECD in the serum with the concentration ranging from 71.9 to above 210 ng/ml in the patient with breast cancer showing low expression of HER2 (1+), which is considered HER2 negative tumor (Table 4). In the same range was the HER2 level (83.8 ng/ml) in the serum of the patient with a benign pathology of endometrium. In contrast, the HER2 ECD [...] HER2 was also quantified in the corresponding tumor tissue from the same mice. The sample extracts containing PBS-soluble proteins and the whole tissue proteins soluble in RIPA buffer were tested by in-house ELISA. In comparison to the serum, the HER2 levels in the tumor tissues in group A were several times higher, however, it varied depending on the individual mouse (Table 3). The concentration of soluble HER2 (PBS-extracted) was in the range of 10.1–80.8 \\(\\upmu\\)g/ml, while the cell-bound [...] concentration is 15 ng/ml9.\") according to the Food and Drug Administration and various manufacturer’s (e.g. Siemens Healthineers, Bayer) recommendations. Moderate sHER2 increase (up to 50 ng/ml) has also been described in other conditions, like such as liver disease, preeclampsia, and chronic heart failure10.\"),11.\"),12 in patients with malignant and non-malignant diseases. Tumor Biol. 18, 188 (1997).\"). Despite ELISA for HER2 ECD detection being an attractive approach, its context of use may",
+      "score": 0.81489426,
+      "raw_content": null,
+      "favicon": "https://www.nature.com/static/images/favicons/nature/apple-touch-icon-f39cb19454.png"
+    },
+    {
+      "url": "https://bmccancer.biomedcentral.com/articles/10.1186/s12885-020-6594-0",
+      "title": "Plasma HER2ECD a promising test for patient prognosis and ...",
+      "content": "These plasma baseline mean values correlated positively with the HER2 gene ratio (rs = 0.39, P < 0.001) and HER2 protein expression levels (rs = 0.36, P < 0.001). The HER2ECD levels were found significantly (P < 0.001) higher in patients with HER2 Dako 3+ (median; range: 40; 6-1485 ng/ml; n = 83) as compared to Dako 2+ (13; 7-138 ng/ml; n = 29) as detected locally in primary tumors. No significant difference was found between the HER2ECD baseline values and other available parameters such as ER [...] The test cut-off value recommended by the manufacturer in serum of primary and metastatic patients is 15 ng/ml [18:696–707.\"),19:5123–9.\"),20:1140–4.\"),21 in the serum of patients treated with chemotherapy for metastatic breast cancer. Breast Cancer Res Treat. 2004;86(1):9–18.\")]. This threshold is used to discriminate HER2+ from HER2 negative patients and is known to be indicative for bad prognosis under chemotherapy alone. Therefore, we analyzed the impact of this threshold value with respect [...] The HER2ECD levels just before (n = 131) and after (n = 113) trastuzumab infusion varied within the normal repeated measurements variance independently from their levels. The detected ranges varied from 5 to 1427 ng/ml (median 26 ng/ml; mean 81 ng/ml) and 5-1543 ng/ml (median 27 ng/ml; mean 76 ng/ml) in samples before and after the first trastuzumab infusion with a resulting Pearson correlation coefficient of 0.995. This extremely high correlation is independent from the treatment arm (Arm A:",
+      "score": 0.6538572,
+      "raw_content": null,
+      "favicon": "https://bmccancer.biomedcentral.com/static/img/favicons/bmc/apple-touch-icon-582ef1d0f5.png"
+    },
+    {
+      "url": "https://www.sciencedirect.com/science/article/pii/S0023683722014283",
+      "title": "The extracellular domain of Her2 in serum as a biomarker of breast ...",
+      "content": "10–100-fold more oncogenic than the full-length receptor and promotes the growth and survival of cancer cells. Shedding of the HER2 ECD is increased during metastasis: whereas 15% of primary breast cancer patients have elevated levels of serum HER2 ECD (sHER2 ECD), the levels reach 45% in patients with metastatic disease. Thus, sHER2 ECD has been proposed as a promising biomarker for cancer recurrence and for monitoring the disease status of patients overexpressing HER2. Nevertheless, in 2016, [...] the American Society of Clinical Oncology advises clinicians not to use soluble HER2 levels to guide their choice of adjuvant therapy for patients with HER2-positive breast cancer, because the evidence was considered not strong enough. Currently, biomarkers such as carcinoembryonic antigen and cancer antigen 15-3 are widely used to monitor metastatic breast cancer disease even if the level of evidence of clinical impact of this monitoring is poor. In this article, we review the evidence that",
+      "score": 0.52583206,
+      "raw_content": null,
+      "favicon": "https://sdfestaticassets-us-east-1.sciencedirectassets.com/shared-assets/103/images/favSD.ico"
+    },
+    {
+      "url": "https://www.mdanderson.org/cancerwise/her2-low-breast-cancer-expert--precise-diagnosis-can-lead-to-personalized-treatment.h00-159542901.html",
+      "title": "What is HER2 low breast cancer? | MD Anderson Cancer Center",
+      "content": "Advice for HER2 low breast cancer patients\n\nBefore trastuzumab deruxtecan, breast cancers were either considered HER2 positive or HER2 negative. But we now know that 50% to 60% of breast cancer diagnoses are classified as HER2 low. The addition of this targeted therapy makes it even more important for patients to seek care from a center of excellence like MD Anderson that can perform precise testing. [...] If the IHC score is more than three, the tumor is HER2 positive. For years, any score lower than three was considered HER2 negative. Now, thanks to more detailed testing, there’s a name for HER2 levels between 1-2: HER2 low.\n\nA score of zero is called HER2 negative. If the IHC score is 2, then fluorescence in situ hybridization (FISH) testing is needed to determine if HER2 is positive or negative. This pathology technique looks at the gene that encodes HER2 to see how many copies are present.",
+      "score": 0.46993434,
+      "raw_content": null,
+      "favicon": "https://www.mdanderson.org/etc.clientlibs/mda/clientlibs/mda-web/clientlib-site/resources/images/favicon.ico"
+    }
+  ],
+  "response_time": 3.32,
+  "request_id": "3da2c1ec-4304-4930-b28c-efe89814d609"
+}

@@ -1,0 +1,50 @@
+{
+  "query": "what is range of volume of distribution and drug clearance of anti-PD1 therapies in humans?",
+  "follow_up_questions": null,
+  "answer": "In humans anti-PD-1 monoclonal antibodies show a low systemic clearance of approximately 0.15-0.30L/day (about 2-4mL/kg/h) and a volume of distribution close to plasma volume, ranging from roughly 3 to 5L (40-60mL/kg).",
+  "images": [],
+  "results": [
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/35983041/",
+      "title": "Population pharmacokinetic models of anti-PD-1 mAbs in patients ...",
+      "content": "The estimated CL and volume of distribution in the central (VC) ranged from 0.179 to 0.290 L/day and 2.98 to 4.46 L, respectively.",
+      "score": 0.81524754,
+      "raw_content": null,
+      "favicon": "https://cdn.ncbi.nlm.nih.gov/coreutils/nwds/img/favicons/favicon.png"
+    },
+    {
+      "url": "https://bpspubs.onlinelibrary.wiley.com/doi/10.1002/prp2.757",
+      "title": "Unraveling the complexity of therapeutic drug monitoring for ...",
+      "content": "Interindividual variability in PK parameters for clearance and distribution volumes ranges ... anti-PD1) in treating melanoma and lung cancer.",
+      "score": 0.6337056,
+      "raw_content": null,
+      "favicon": "https://bpspubs.onlinelibrary.wiley.com/favicon.ico"
+    },
+    {
+      "url": "https://www.frontiersin.org/journals/pharmacology/articles/10.3389/fphar.2024.1380000/full",
+      "title": "Translational PK/PD and the first-in-human dose selection of a PD1 ...",
+      "content": "The PD1/IL15 TaCk also displayed a considerably prolonged PK (half-life range ∼1.0–4.1 days) compared to wild-type IL-15 (half-life ∼1.1 h),",
+      "score": 0.418341,
+      "raw_content": null,
+      "favicon": "https://www.frontiersin.org/favicons/apple-touch-icon.png"
+    },
+    {
+      "url": "https://www.mdpi.com/2072-6694/17/19/3262",
+      "title": "Optimizing Anti-PD1 Immunotherapy: An Overview of ... - MDPI",
+      "content": "By integrating PK data, clearance biomarkers, and clinical outcomes, the review supports a shift toward more adaptive and personalized use of anti-PD1 therapies aimed at maximizing therapeutic benefit while minimizing adverse effects. The review also discusses established biomarkers for anti-PD-1 therapies, including tumor PD-L1 expression and immune cell signatures, and their relevance for patient stratification. anti-PD-1 drugs; cancer; pharmacokinetics; therapeutic drug monitoring; immune checkpoint inhibitors; biomarkers; clearance [Google Scholar+and+derived+NLR+could+predict+overall+survival+in+patients+with+advanced+melanoma+treated+with+nivolumab&author=Capone,+M.&author=Giannarelli,+D.&author=Mallardo,+D.&author=Madonna,+G.&author=Festino,+L.&author=Grimaldi,+A.M.&author=Vanella,+V.&author=Simeone,+E.&author=Paone,+M.&author=Palmieri,+G.&author=et+al.&publication_year=2018&journal=J.+Immunother.+Cancer&volume=6&pages=74&doi=10.1186/s40425-018-0383-1&pmid=30012216)] [CrossRef] [PubMed] [Google Scholar+clinical+practice+guideline+on+immune+checkpoint+inhibitor-related+adverse+events&author=Brahmer,+J.R.&author=Abu-Sbeih,+H.&author=Ascierto,+P.A.&author=Brufsky,+J.&author=Cappelli,+L.C.&author=Cortazar,+F.B.&author=Gerber,+D.E.&author=Hamad,+L.&author=Hansen,+E.&author=Johnson,+D.B.&author=et+al.&publication_year=2021&journal=J.+Immunother.+Cancer&volume=9&pages=e002435&doi=10.1136/jitc-2021-002435)] [CrossRef] [Google Scholar,+a+bifunctional+PD1/CTLA4+dual+blocker,+in+patients+with+advanced+solid+tumors&author=Zhao,+Y.&author=Ma,+Y.&author=Zang,+A.&author=Cheng,+Y.&author=Zhang,+Y.&author=Wang,+X.&author=Chen,+Z.&author=Qu,+S.&author=He,+J.&author=Chen,+C.&author=et+al.&publication_year=2023&journal=J.+Hematol.+Oncol.&volume=16&pages=50&doi=10.1186/s13045-023-01445-1)] [CrossRef] [Google Scholar+cells+in+immunotherapy-resistant+cancers&author=Spiliopoulou,+P.&author=Kaur,+P.&author=Hammett,+T.&author=Di+Conza,+G.&author=Lahn,+M.&publication_year=2024&journal=Cancer+Drug+Resist.&volume=7&pages=2&doi=10.20517/cdr.2023.46)] [CrossRef] Monteiro, J.F.; Fernandes, A.; Tato, D.G.; Moreira, E.; Ribeiro, R.; Reguengo, H.; Gonçalves, J.; Fresco, P. \"Optimizing Anti-PD1 Immunotherapy: An Overview of Pharmacokinetics, Biomarkers, and Therapeutic Drug Monitoring\" *Cancers* 17, no.",
+      "score": 0.4054258,
+      "raw_content": null,
+      "favicon": "https://pub.mdpi-res.com/icon/apple-touch-icon-144x144.png?1760951576"
+    },
+    {
+      "url": "https://www.tandfonline.com/doi/full/10.1080/19420862.2015.1136043",
+      "title": "Preclinical pharmacokinetics, pharmacodynamics, tissue distribution ...",
+      "content": "Volume of distribution at steady state (Vss) was approximately that of the plasma volume, ranging from 42.6 to 57.7 mL·kg−1.",
+      "score": 0.31510386,
+      "raw_content": null,
+      "favicon": "https://www.tandfonline.com/favicon.ico"
+    }
+  ],
+  "response_time": 1.9,
+  "request_id": "875e0661-1151-4a14-8e40-c0400728fb26"
+}
