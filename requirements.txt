@@ -1,0 +1,6 @@
+scipy
+matplotlib
+streamlit
+pysb
+cython
+setuptools
