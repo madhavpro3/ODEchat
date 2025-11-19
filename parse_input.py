@@ -1,5 +1,3 @@
-import requests
-import ollama
 import re
 from typing import List, Dict, Callable
 from pydantic import BaseModel
@@ -266,3 +264,4 @@ def extract_modelnum(input:str) -> int:
 def extract_num(input:str) -> float:
     match = re.search(r'\d+',input)
     return float(match.group())
+
