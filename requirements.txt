@@ -4,3 +4,4 @@ streamlit
 pysb
 cython
 setuptools
+pydantic
