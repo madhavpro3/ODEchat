@@ -45,10 +45,10 @@ for item in st.session_state.messages:
     if item["type"]=='html':
         st.html(item["content"])
     elif item["type"]=='note':
-        with st.chat_message("note",avatar="img\\icon_info.png"):
+        with st.chat_message("note",avatar="img/icon_info.png"):
             st.write(item['content'])
     elif item["type"]=='note':
-        with st.chat_message("note",avatar="img\\icon_info.png"):
+        with st.chat_message("note",avatar="img/icon_info.png"):
             st.write(item["content"])
     elif item["type"]=='img-big':
         st.image(item['content'],width=600)
@@ -75,7 +75,7 @@ for item in st.session_state.messages:
                 st.pyplot(fig,width="content")
 
 st.set_page_config(page_title="ODEchat")
-st.logo("img\\logo\\odechat_nobg_big.png",size="large")
+st.logo("img/logo/odechat_nobg_big.png",size="large")
 #----------------------------- Actions -------------------------------
 @st.dialog('Update params')
 def openparamdialog(df):
