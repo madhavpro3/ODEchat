@@ -245,8 +245,8 @@ while(len(st.session_state.outstanding)>0):
                         st.session_state.msgstream.append({"type":"str","content":f"Loaded {MODELS[modelnum-1]}"})
                         st.session_state.messages.append({"id":curid,"role":"assistant","type":"str","content":f"Loaded {MODELS[modelnum-1]}"})
 
-                        st.session_state.msgstream.append({"type":"img","content":f"img\\model_{modelnum}.png"})
-                        st.session_state.messages.append({"id":curid,"role":"assistant","type":"img","content":f"img\\model_{modelnum}.png"})
+                        st.session_state.msgstream.append({"type":"img","content":f"img/model_{modelnum}.png"})
+                        st.session_state.messages.append({"id":curid,"role":"assistant","type":"img","content":f"img/model_{modelnum}.png"})
 
                         df_modelvals=st.session_state.modelobj.show()
                         st.session_state.messages.append({"id":curid,"role":"assistant","task":routed['response'],"type":"df","content":df_modelvals})
@@ -256,8 +256,8 @@ while(len(st.session_state.outstanding)>0):
                         st.session_state.msgstream.append({"type":"str","content":st.session_state.modelobj.description})
 
                         modelnum=st.session_state.modelobj.modeltype
-                        st.session_state.msgstream.append({"type":"img","content":f"img\\model_{modelnum}.png"})
-                        st.session_state.messages.append({"id":curid,"role":"assistant","type":"img","content":f"img\\model_{modelnum}.png"})
+                        st.session_state.msgstream.append({"type":"img","content":f"img/model_{modelnum}.png"})
+                        st.session_state.messages.append({"id":curid,"role":"assistant","type":"img","content":f"img/model_{modelnum}.png"})
 
                         df_modelvals=st.session_state.modelobj.show()
                         st.session_state.messages.append({"id":curid,"role":"assistant","task":routed['response'],"type":"df","content":df_modelvals})
@@ -344,13 +344,13 @@ while(len(st.session_state.outstanding)>0):
                         # research vd and cl for anti-PD1 therapies
                         # research of sHER2 concentration in cancer patients
                         if re.search('sher2',task.lower()):
-                            with open('docs\\sher2_json.json', 'r') as file:
+                            with open('docs/sher2_json.json', 'r') as file:
                                 data = json.load(file)
                                 reply=f"<p>{data["answer"]}</p>"
                                 for inx,ref in enumerate(data["results"]):
                                     reply+=f"<a href='{ref['url']}'>[{inx+1}]</a>"
                         elif re.search('vc',task.lower()):
-                            with open('docs\\antipd1_json.json', 'r') as file:
+                            with open('docs/antipd1_json.json', 'r') as file:
                                 data = json.load(file)
                                 reply=f"<p>{data["answer"]}</p>"
                                 for inx,ref in enumerate(data["results"]):
@@ -364,15 +364,15 @@ while(len(st.session_state.outstanding)>0):
                     elif routed['response']=='note':
                         st.session_state.messages.append({"id":curid,"role":"assistant","task":routed['response'],"type":"note","content":task})
                         st.session_state.msgstream.append({"type":"note","content":task})
-                    elif routed['response']=='explain':
-                        if re.search('optimus',task.lower()):
-                            with open('docs\\info_optimus.json', 'r') as file:
-                                data = json.load(file)
-                                reply=f"<p>{data["answer"]}</p>"
-                        elif re.search('adc',task.lower()):
-                            with open('docs\\info_adc_translation.json', 'r') as file:
-                                data = json.load(file)
-                                reply=f"<p>{data["answer"]}</p>"
+                    # elif routed['response']=='explain':
+                    #     if re.search('optimus',task.lower()):
+                    #         with open('docs/info_optimus.json', 'r') as file:
+                    #             data = json.load(file)
+                    #             reply=f"<p>{data["answer"]}</p>"
+                    #     elif re.search('adc',task.lower()):
+                    #         with open('docs/info_adc_translation.json', 'r') as file:
+                    #             data = json.load(file)
+                    #             reply=f"<p>{data["answer"]}</p>"
 
                         st.session_state.messages.append({"id":curid,"role":"assistant","task":routed['response'],"type":"html","content":reply})
                         st.session_state.msgstream.append({"type":"html","content":reply})
@@ -397,7 +397,7 @@ while(len(st.session_state.outstanding)>0):
             elif item["type"]=='editor_df':
                 openparamdialog(item["content"])
             elif item["type"]=='note':
-                with st.chat_message("note",avatar="img\\icon_info.png"):
+                with st.chat_message("note",avatar="img/icon_info.png"):
                     st.write(item["content"])
             elif item["type"]=='img-big':
                 st.image(item['content'],width=600)
