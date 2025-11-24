@@ -14,7 +14,7 @@ class BasicResponse(BaseModel):
 class SimParameters(BaseModel):
     dose:float = 10
     doseunits:str = 'mpk'
-    doseregimen:str = 'q3w'
+    doseregimen:str = ''
     time:float = 21
     timeunits:str = 'day'
 
@@ -119,7 +119,7 @@ def findaction(userinput: str, routes: Dict[str,List]):
 def extract_simparameters(input: str):
     w=input.split(" ")
 
-    return SimParameters(dose=extract_num(w[1]),doseunits="mpk",dosregimen=w[2],time=extract_num(w[3]),timeunits="days")
+    return SimParameters(dose=extract_num(w[1]),doseunits="mpk",doseregimen=w[2],time=extract_num(w[3]),timeunits="days")
     # return {"dose":extract_num(w[1]),"doseunits":"mpk",
     #     "doseregimen":w[2],"time":extract_num(w[3]),"timeunits":"days"}
     # Dose, time, dose regimen
@@ -264,4 +264,3 @@ def extract_modelnum(input:str) -> int:
 def extract_num(input:str) -> float:
     match = re.search(r'\d+',input)
     return float(match.group())
-

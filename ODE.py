@@ -110,21 +110,7 @@ class PKmodel:
 			ydot[0]=- (self.CL/self.Vc)*y[0] + self.Koff*y[2] - self.Kon*y[0]*y[1]
 			ydot[1]=self.Tsyn - self.Tdeg*y[1] + self.Koff*y[2] - self.Kon*y[0]*y[1]
 			ydot[2]=self.Kon*y[0]*y[1] - self.Koff*y[2]
-
-		# if self.ncompartments==2:
-		# 	ydot.append(0)
-		# 	ydot[0]-=
-		# 	ydot.append((self.Q/self.Vc)*self.ydot[0] - (self.Q/self.Vp)*self.ydot[len(ydot)-1]) # drug peripheral
-		# 	ydot
-
 		return ydot
-	# def addcompartment(self,compname):
-	# 	self.Parameters.append(ModelEnt('p','Vp','L',self.Vc,compname) #same value as Vc 
-	# 	return 
-
-	# def adddistribution(self):
-	# 	self.Parameters.append(ModelEnt('p','Q','L/day',self.CL,'Distribution rate') #same value as CL
-	# 	return 
 
 
 	def checkifdefined(self):
@@ -163,32 +149,65 @@ class PKmodel:
 				# update time in the results
 				# update initconditions to the last value
 
+		self.doseamount_nmoles=Dose.amount
 		if Dose.interval==0:
-			self.doseamount_nmoles=Dose.amount
-			t=[0,simTime_days] # days
+			ncycles=0
+		else:
+			ncycles=int(simTime_days/Dose.interval) # Both are in days
 
-			self.setinitcondition()
+		dosespeciesinx=0
+		for sinx,s in enumerate(self.Species):
+			if Dose.species==s.name:
+				dosespeciesinx=sinx
+				break
 
-			npresults = solve_ivp(self.getode,t,self.initialCondition)
-			npresults.t=np.reshape(npresults.t,(1,npresults.t.size))
+		residuals=[s.value for s in self.Species]
+		overall_npresults=np.array([])
+		# cycinx=0
+		Tmax_prev=0
+		for cycinx in range(ncycles):
+			# t=[cycinx*Dose.interval,(cycinx+1)*Dose.interval] # days
+			t=[Tmax_prev,(cycinx+1)*Dose.interval] # days
 
-			npresults=np.concatenate((npresults.t,npresults.y)).transpose()
-			speciesnames=self.getspeciesnames()
-			dfcolumnnames=['time']+[s.lower() for s in speciesnames]
-			self.simResults=pd.DataFrame(npresults,columns=dfcolumnnames)
+			# Set initial condition
+			self.initialCondition=[rs for rs in residuals]
+			self.initialCondition[dosespeciesinx]+=self.doseamount_nmoles/self.Vc
 
-			return self.simResults
-			# ion()
-			# for i in range(len(self.simResults.y)):
-			# 	fig, ax1 = plt.subplots()
-			# 	ax1.plot(self.simResults.t, self.simResults.y[i])
-			# 	ax1.set_xlabel("Time (days)")
-			# 	ax1.set_ylabel(self.Species[0].name)
+			cyc_npresults = solve_ivp(self.getode,t,self.initialCondition,method='LSODA')
+			residuals=[cyc_npresults.y[sinx,-1] for sinx in range(3)]
 
-			# plt.plot(self.simResults.t, self.simResults.y[0])
-			# plt.xlabel('Time (days)')
-			# plt.ylabel(self.Species[0].name)
-			# plt.show()
+			cyc_npresults.t=np.reshape(cyc_npresults.t,(1,cyc_npresults.t.size))
+			cyc_npresults=np.concatenate((cyc_npresults.t,cyc_npresults.y)).transpose()
+
+			if cycinx==0:
+				overall_npresults=cyc_npresults
+			else:
+				overall_npresults=np.vstack((overall_npresults,cyc_npresults))
+
+			Tmax_prev=(cycinx+1)*Dose.interval
+
+		# Simulation between last cycle and simTime_days
+		# t=[(cycinx+1)*Dose.interval,simTime_days]
+		t=[Tmax_prev,simTime_days]
+		# Set initial condition
+		self.initialCondition=[rs for rs in residuals]
+		self.initialCondition[dosespeciesinx]+=Dose.amount/self.Vc
+
+		cyc_npresults = solve_ivp(self.getode,t,self.initialCondition,method='LSODA')
+		residuals=[cyc_npresults.y[sinx,-1] for sinx in range(3)]
+
+		cyc_npresults.t=np.reshape(cyc_npresults.t,(1,cyc_npresults.t.size))
+		cyc_npresults=np.concatenate((cyc_npresults.t,cyc_npresults.y)).transpose()
+		if overall_npresults.size==0:
+			overall_npresults=cyc_npresults
+		else:
+			overall_npresults=np.vstack((overall_npresults,cyc_npresults))
+
+		speciesnames=self.getspeciesnames()
+		dfcolumnnames=['time']+[s.lower() for s in speciesnames]
+		self.simResults=pd.DataFrame(overall_npresults,columns=dfcolumnnames)
+
+		return self.simResults
 
 	def update(self,UpdateParameters):
 		for inx,e in enumerate(self.Parameters):
@@ -271,11 +290,12 @@ class ModelEnt:
 	# 		return f"{self.name} | {self.type} | {self.value} | {self.unit}"
 
 class Dose:
-	def __init__(self,amount=0,unit='mpk',interval=0,timeunits='days'):
+	def __init__(self,amount=0,unit='mpk',interval=0,timeunits='days',species='dc'):
 		self.amount=amount
 		self.unit=unit
 		self.interval=interval
 		self.timeunits=timeunits
+		self.species=species
 
 
 	# def getode_ivb_notmdd(self,t,y):
