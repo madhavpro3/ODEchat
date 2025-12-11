@@ -847,6 +847,7 @@ with st.expander("Model Chat",expanded=True):
                 # st.session_state.msgstream[-1]["content"]=userask
                 st.session_state.messages[-1]["content"]=userask
                 st.session_state.messages[-1]["show_current_msg"]=True
+                st.session_state.msgstream=st.session_state.messages[-1]
 
             elif routed['response']=='showmodel':
                 # st.session_state.messages.append({"id":curid,"task":routed['response']})
