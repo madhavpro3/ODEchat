@@ -1,3 +1,5 @@
+import requests
+import ollama
 import re
 from typing import List, Dict, Callable
 from pydantic import BaseModel
@@ -118,7 +120,8 @@ def findaction(userinput: str, routes: Dict[str,List]):
     
 def extract_simparameters(input: str):
     w=input.split(" ")
-
+    if len(w)<4:
+        return SimParameters(dose=0,doseunits="mpk",doseregimen='',time=0,timeunits="days") 
     return SimParameters(dose=extract_num(w[1]),doseunits="mpk",doseregimen=w[2],time=extract_num(w[3]),timeunits="days")
     # return {"dose":extract_num(w[1]),"doseunits":"mpk",
     #     "doseregimen":w[2],"time":extract_num(w[3]),"timeunits":"days"}
@@ -209,11 +212,14 @@ def extract_updateparameters(input: str):
 
 
 def extract_plotparameters(input: str):
-    # match = re.search(f'plot (.*?) and (.*?)', input.lower(), re.DOTALL)
-    # if match:
-    #     return PlotParameters.model_validate_json({"X":match.group(1),"Y":match.group(2)})
 
+    # checks
+    # 1) Check if 1 or 2 inputs are provided
+    # 2) check if the inputs are among the model species
     w=input.split(" ")
+
+    if len(w)<4:
+        return PlotParameters(X='',Y='')
     return PlotParameters(X=w[1],Y=w[3])
 
     # extractor_prompt=f"""Extract parameter names from the given text in JSON format.
@@ -236,20 +242,13 @@ def extract_plotparameters(input: str):
 
     # return plot_p
 
-def extract_metricvalue(input:str,simdata,t=0) -> [str,float]:
-    metrics={"cmax": lambda simd: max(simd["dc"]),"rolast": lambda simd: round(100*simd.iloc[-1].at["compc"]/(simd.iloc[-1].at["compc"] + simd.iloc[-1].at["tc"]),2),
-    "roattime": lambda simd,t: round(100*simd.iloc[simd.index[simd.time==t]].at["compc"]/(simd.iloc[simd.index[simd.time==t]].at["compc"] + simd.iloc[simd.index[simd.time==t]].at["tc"]),2),
-    "auc": lambda simd: round(integrate.trapezoid(simd.dc,simd.time),2)}
-
-    # match = re.search(f'find (.*?)', input.lower(), re.DOTALL)
-    # if match:
-    #     return [match,metrics[match.group(1)](simdata)]
-
-    # print(simdata)
+def extract_metricname(input:str,simdata,t=0) -> str:
+    metrics_available={"cmax","auc","rolast","roattime"}
     metric_name=input.split("find")[1].strip()
-    metric_value=metrics[metric_name](simdata)
+    if metric_name in metrics_available:
+        return metric_name
 
-    return [metric_name,metric_value]    
+    return ""
 
 def extract_workbooknum(input:str) -> int:
     match = re.search(r'\d+',input)
