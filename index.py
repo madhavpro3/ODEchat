@@ -513,12 +513,6 @@ if "modelstates" not in st.session_state:
     #      - (X(3)/(0.35*ISF*Kp))*(0.67*L)*(1-sigmaL)
     # XP(4)=(X(2)/(0.65*ISF*Kp))*(0.33*L)*(1-sigmaL) + (X(3)/(0.35*ISF*Kp))
     #      *(0.67*L)*(1-sigmaL) - X(4)*(L/VL)
-    pnames=["Vp","Vl","ISF","CLp","CLi","L","Kp","sigma_1","sigma_2","sigmaL"]
-    snames=["R","Dplasma","Dtight","Dleaky","Dlymph"]
-    odes=["R-(Dplasma/Vp)*(CLp+0.33*L*(1-sigma_1)+ 0.67*L*(1-sigma_2)) + Dlymph*(L/VL)",
-    "(Dplasma/Vp)*(0.33*L)*(1-sigma_1) - (Dtight/(0.65*ISF*Kp))*CLi - (Dtight/(0.65*ISF*Kp))*(0.33*L)*(1-sigmaL)",
-    "(Dplasma/Vp)*(0.67*L)*(1-sigma_2) - (Dleaky/(0.35*ISF*Kp))*CLi - (Dleaky/(0.35*ISF*Kp))*(0.67*L)*(1-sigmaL)",
-    "(Dtight/(0.65*ISF*Kp))*(0.33*L)*(1-sigmaL) + (Dleaky/(0.35*ISF*Kp))*(0.67*L)*(1-sigmaL) - Dlymph*(L/VL)"]
 
     Parameters,Species=[],[]
     for inx in range(len(pnames)):
