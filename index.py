@@ -469,7 +469,7 @@ def find_dose(metric_name,desired_metric_value) -> float:
 # st.caption("An interactive simulation platform for pharmacologists")
 
 st.set_page_config(page_title="ODEchat")
-
+st.set_page_config(layout='wide')
 
 ROUTES={"showcontrols":[["view","show","list","controls","control"],"list controls: lists all the controls"],
     "showmodel":[["view","show","list","model"],"show model: show details of the current model"],
