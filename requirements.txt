@@ -1,6 +1,6 @@
 scipy
 matplotlib
-streamlit
+streamlit==1.50.0
 pysb
 cython
 setuptools
