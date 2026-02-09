@@ -1,32 +1,32 @@
 import re
 from typing import List, Dict, Callable
-# from pydantic import BaseModel
+from pydantic import BaseModel
 import json
 import pandas as pd
 from scipy import integrate
 
 #------------------- Pydantic data classes -------------------
 
-# class BasicResponse(BaseModel):
-#     thinking: str
-#     response: str
+class BasicResponse(BaseModel):
+    thinking: str
+    response: str
 
-# class SimParameters(BaseModel):
-#     dose:float = 10
-#     doseunits:str = 'mpk'
-#     doseregimen:str = ''
-#     time:float = 21
-#     timeunits:str = 'day'
+class SimParameters(BaseModel):
+    dose:float = 10
+    doseunits:str = 'mpk'
+    doseregimen:str = ''
+    time:float = 21
+    timeunits:str = 'day'
 
-# class UpdateParameters(BaseModel):
-#     parametername: str=''
-#     value: float=0
+class UpdateParameters(BaseModel):
+    parametername: str=''
+    value: float=0
 
-# class PlotParameters(BaseModel):
-#     X: str
-#     Y: str
-#     Yscale_log: bool = False
-#     Xscale_log: bool = False 
+class PlotParameters(BaseModel):
+    X: str
+    Y: str
+    Yscale_log: bool = False
+    Xscale_log: bool = False 
 
 # #------------------------------------
 # def llm_call(prompt,outputformat):
@@ -263,3 +263,4 @@ def extract_modelnum(input:str) -> int:
 def extract_num(input:str) -> float:
     match = re.search(r'\d+',input)
     return float(match.group())
+
