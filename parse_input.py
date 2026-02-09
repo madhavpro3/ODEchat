@@ -1,6 +1,7 @@
 import re
 from typing import List, Dict, Callable
 from pydantic import BaseModel
+import json
 import pandas as pd
 from scipy import integrate
 
@@ -24,6 +25,8 @@ class UpdateParameters(BaseModel):
 class PlotParameters(BaseModel):
     X: str
     Y: str
+    Yscale_log: bool = False
+    Xscale_log: bool = False 
 
 #------------------------------------
 def llm_call(prompt,outputformat):
@@ -209,7 +212,7 @@ def extract_updateparameters(input: str):
 
 
 def extract_plotparameters(input: str):
-
+    # Example: plot x,xscale and y,yscale
     # checks
     # 1) Check if 1 or 2 inputs are provided
     # 2) check if the inputs are among the model species
@@ -217,7 +220,7 @@ def extract_plotparameters(input: str):
 
     if len(w)<4:
         return PlotParameters(X='',Y='')
-    return PlotParameters(X=w[1],Y=w[3])
+    return PlotParameters(X=w[1].split(",")[0],Xscale_log=int(w[1].split(",")[1]),Y=w[3],Yscale_log=int(w[3].split(",")[1]))
 
     # extractor_prompt=f"""Extract parameter names from the given text in JSON format.
     
@@ -260,4 +263,3 @@ def extract_modelnum(input:str) -> int:
 def extract_num(input:str) -> float:
     match = re.search(r'\d+',input)
     return float(match.group())
-
