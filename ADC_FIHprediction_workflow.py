@@ -669,7 +669,7 @@ def runworkflow():
     else:
         filename_mouse_tgi="Mouse_TGI_H1975_A1mcMMAF.csv"
 
-    cyno_pk=pd.read_csv("user_uploads\\"+filename_cyno_pk)
+    cyno_pk=pd.read_csv("user_uploads/"+filename_cyno_pk)
     cyno_pk=cyno_pk[~cyno_pk["ADC_ug_ml"].isna()]
 
     st.session_state.messages.append({"id":idnum,"ask":"","task":"section",
@@ -1596,3 +1596,4 @@ if userask:=st.chat_input():
                 st.html(m["content"])
 
         st.session_state.msgstream=[]
+
