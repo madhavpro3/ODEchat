@@ -1,54 +1,54 @@
 import re
 from typing import List, Dict, Callable
-from pydantic import BaseModel
+# from pydantic import BaseModel
 import json
 import pandas as pd
 from scipy import integrate
 
 #------------------- Pydantic data classes -------------------
 
-class BasicResponse(BaseModel):
-    thinking: str
-    response: str
+# class BasicResponse(BaseModel):
+#     thinking: str
+#     response: str
 
-class SimParameters(BaseModel):
-    dose:float = 10
-    doseunits:str = 'mpk'
-    doseregimen:str = ''
-    time:float = 21
-    timeunits:str = 'day'
+# class SimParameters(BaseModel):
+#     dose:float = 10
+#     doseunits:str = 'mpk'
+#     doseregimen:str = ''
+#     time:float = 21
+#     timeunits:str = 'day'
 
-class UpdateParameters(BaseModel):
-    parametername: str=''
-    value: float=0
+# class UpdateParameters(BaseModel):
+#     parametername: str=''
+#     value: float=0
 
-class PlotParameters(BaseModel):
-    X: str
-    Y: str
-    Yscale_log: bool = False
-    Xscale_log: bool = False 
+# class PlotParameters(BaseModel):
+#     X: str
+#     Y: str
+#     Yscale_log: bool = False
+#     Xscale_log: bool = False 
 
-#------------------------------------
-def llm_call(prompt,outputformat):
-    payload = {
-    "model": "gemma3:4b", # your installed model name
-    "messages": [{"role":"system","content":prompt}],
-    "stream": False,
-    "format":outputformat.model_json_schema(),
-    "temperature":0.
-    }
-    response = requests.post("http://localhost:11434/api/chat", json=payload)
+# #------------------------------------
+# def llm_call(prompt,outputformat):
+#     payload = {
+#     "model": "gemma3:4b", # your installed model name
+#     "messages": [{"role":"system","content":prompt}],
+#     "stream": False,
+#     "format":outputformat.model_json_schema(),
+#     "temperature":0.
+#     }
+#     response = requests.post("http://localhost:11434/api/chat", json=payload)
 
-    if response.status_code == 200:
-        data = response.json()
-        if "message" in data and "content" in data["message"]:
-            reply = data["message"]["content"]
-        else:
-            reply = "Got response, but no message content was found."
-    else:
-        reply = f"Ollama returned status code {response.status_code}"
+#     if response.status_code == 200:
+#         data = response.json()
+#         if "message" in data and "content" in data["message"]:
+#             reply = data["message"]["content"]
+#         else:
+#             reply = "Got response, but no message content was found."
+#     else:
+#         reply = f"Ollama returned status code {response.status_code}"
         
-    return reply
+#     return reply
 
 def extract_xml(text: str, tag: str) -> str:
     """
