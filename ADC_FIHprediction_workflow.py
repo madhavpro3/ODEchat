@@ -836,7 +836,7 @@ def runworkflow():
     newmessages.append({"id":idnum,"ask":"","task":"note",
         "modelstate":len(st.session_state.modelstates)-1,"content":"Units are incorrect in the publication. It should be ug/ml not nM"})
 
-    mouse_pk=pd.read_csv("user_uploads\\"+filename_mouse_pk)
+    mouse_pk=pd.read_csv("user_uploads/"+filename_mouse_pk)
     mouse_pk=mouse_pk[~mouse_pk["ADC_nM"].isna()]
 
     # plot data: colored by dose
@@ -874,7 +874,7 @@ def runworkflow():
         "modelstate":len(st.session_state.modelstates)-1,"show_current_msg":True,"content":"Mouse PK/TGI visualization"})
 
     # view data
-    mouse_tgi=pd.read_csv("user_uploads\\"+filename_mouse_tgi)
+    mouse_tgi=pd.read_csv("user_uploads/"+filename_mouse_tgi)
     mouse_tgi=mouse_tgi[~mouse_tgi["TV_mm3"].isna()]
     # plot data: colored by dose
     mouse_tgi_expdata=pd.DataFrame({"xdata":mouse_tgi["Time_days"],"ydata":mouse_tgi["TV_mm3"],"legend":mouse_tgi["Dose_mpk"]})
@@ -1206,7 +1206,7 @@ def runworkflow():
     #------------------------------------------------
     # Competitor molecule comparison
     #------------------------------------------------
-    filename_competitorinfo="docs\\a5T4targetingADCs.csv"
+    filename_competitorinfo="docs/a5T4targetingADCs.csv"
     competitorinfo_df=pd.read_csv(filename_competitorinfo);
 
     notetxt="Following 5T4 targeting ADCs have been tested in clinic with different types of payloads and RP2D ranged from 1-2.5mpk"
@@ -1596,4 +1596,5 @@ if userask:=st.chat_input():
                 st.html(m["content"])
 
         st.session_state.msgstream=[]
+
 
