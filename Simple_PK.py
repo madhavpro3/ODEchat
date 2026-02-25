@@ -1365,10 +1365,11 @@ with st.container(height=700,border=False):
             st.markdown("7. Type 'simulate' -> Select dose, dose interval, and sim time. ***Simulates the model with the latest parameters. Notice the State banner changes***")
             st.markdown("8. Type 'find dose where rolast=95'. ***Finds the dose where RO=95% in new model state***")
             st.markdown("9. Type 'showstate 0'. ***Lists the model in the previous state***")
-            st.markdown("10. Type 'selectstate 0'. ***Changes the model to the previous state. State banner changes***")
+            st.markdown("10. Type 'selectstate 0'. ***Changes the model to the previous state as seen in the State banner. Repeat steps 1-3 to get the same results.***")
 
             st.markdown("## Plotting")
             st.markdown("11. Type 'plot' -> select the simulations, x and y variables, legends, click plot and close. ***plots the selected variables***")
+
 
 
 
