@@ -13,72 +13,73 @@ import copy
 import altair as alt
 import json
 import pickle
+import random
 import os
 
 
 
-def find_metric(metric_name,data_df,t=0) -> [str,float]:
-    # DRUG,TARGET,TARGET_COMPLEX=datacolumns
-    # if len(datacolumns)==0:
-    TARGET_COMPLEX="d_t_c"
-    DRUG="dc"
-    TARGET="tc"
+# def find_metric(metric_name,data_df,t=0) -> [str,float]:
+#     # DRUG,TARGET,TARGET_COMPLEX=datacolumns
+#     # if len(datacolumns)==0:
+#     TARGET_COMPLEX="d_t_c"
+#     DRUG="dc"
+#     TARGET="tc"
     
-    metrics={"cmax": lambda data_df: max(data_df["ydata"]),
-    "auc": lambda data_df: round(integrate.trapezoid(data_df["ydata"],data_df["xdata"]),2),
-    "rolast": lambda data_df: round(100*data_df.iloc[-1].at[TARGET_COMPLEX]/(data_df.iloc[-1].at[TARGET_COMPLEX] + data_df.iloc[-1].at[TARGET]),2),
-    "roattime": lambda data_df,t: round(100*data_df.iloc[data_df.index[data_df.time==t]].at[TARGET_COMPLEX]/(data_df.iloc[data_df.index[data_df.time==t]].at[TARGET_COMPLEX] + data_df.iloc[data_df.index[data_df.time==t]].at["tc"]),2)}
+#     metrics={"cmax": lambda data_df: max(data_df["ydata"]),
+#     "auc": lambda data_df: round(integrate.trapezoid(data_df["ydata"],data_df["xdata"]),2),
+#     "rolast": lambda data_df: round(100*data_df.iloc[-1].at[TARGET_COMPLEX]/(data_df.iloc[-1].at[TARGET_COMPLEX] + data_df.iloc[-1].at[TARGET]),2),
+#     "roattime": lambda data_df,t: round(100*data_df.iloc[data_df.index[data_df.time==t]].at[TARGET_COMPLEX]/(data_df.iloc[data_df.index[data_df.time==t]].at[TARGET_COMPLEX] + data_df.iloc[data_df.index[data_df.time==t]].at["tc"]),2)}
 
-    metric_value=metrics[metric_name](data_df)
+#     metric_value=metrics[metric_name](data_df)
 
-    return metric_value
+#     return metric_value
 
-# Find dose for metric = <metric_value>
-def find_dose(metric_name,desired_metric_value) -> float:
-    cur_dose_range=[1,1000]
+# # Find dose for metric = <metric_value>
+# def find_dose(metric_name,desired_metric_value) -> float:
+#     cur_dose_range=[1,1000]
 
-    # while true
-    #     simualte at medium value
-    #     check the metric value
+#     # while true
+#     #     simualte at medium value
+#     #     check the metric value
 
-    #     if med dose metric > desired_metric_value
-    #         high dose = med dose
+#     #     if med dose metric > desired_metric_value
+#     #         high dose = med dose
 
-    #     if med dose metric < desired_metric_value
-    #         low dose = med dose
+#     #     if med dose metric < desired_metric_value
+#     #         low dose = med dose
 
-    #     if med dose metric is within 1% of desired_metric_value
-    #         retrn med dose
-    pdresults=st.session_state.modelstates[st.session_state.curstate].simulate(Dose(cur_dose_range[1],interval=7),50)
-    cur_metric_value=find_metric(metric_name,pdresults)
-    while cur_metric_value < desired_metric_value:
-        cur_dose_range[0]=copy.deepcopy(cur_dose_range[1])
-        cur_dose_range[1]*=5
+#     #     if med dose metric is within 1% of desired_metric_value
+#     #         retrn med dose
+#     pdresults=st.session_state.modelstates[st.session_state.curstate].simulate(Dose(cur_dose_range[1],interval=7),50)
+#     cur_metric_value=find_metric(metric_name,pdresults)
+#     while cur_metric_value < desired_metric_value:
+#         cur_dose_range[0]=copy.deepcopy(cur_dose_range[1])
+#         cur_dose_range[1]*=5
 
-    # pdresults=st.session_state.modelobj.simulate(Dose(cur_dose_range[0],interval=7),50)
-    pdresults=st.session_state.modelstates[st.session_state.curstate].simulate(Dose(cur_dose_range[0],interval=7),50)
-    cur_metric_value=find_metric(metric_name,pdresults)
-    while cur_metric_value > desired_metric_value:
-        cur_dose_range[1]=copy.deepcopy(cur_dose_range[0])
-        cur_dose_range[0]/=5
+#     # pdresults=st.session_state.modelobj.simulate(Dose(cur_dose_range[0],interval=7),50)
+#     pdresults=st.session_state.modelstates[st.session_state.curstate].simulate(Dose(cur_dose_range[0],interval=7),50)
+#     cur_metric_value=find_metric(metric_name,pdresults)
+#     while cur_metric_value > desired_metric_value:
+#         cur_dose_range[1]=copy.deepcopy(cur_dose_range[0])
+#         cur_dose_range[0]/=5
 
 
 
-    while 1:
-        med_dose=sum(cur_dose_range)/2
-        # pdresults=st.session_state.modelobj.simulate(Dose(med_dose,interval=7),50)
-        pdresults=st.session_state.modelstates[st.session_state.curstate].simulate(Dose(med_dose,interval=7),50)
-        cur_metric_value=find_metric(metric_name,pdresults)
+#     while 1:
+#         med_dose=sum(cur_dose_range)/2
+#         # pdresults=st.session_state.modelobj.simulate(Dose(med_dose,interval=7),50)
+#         pdresults=st.session_state.modelstates[st.session_state.curstate].simulate(Dose(med_dose,interval=7),50)
+#         cur_metric_value=find_metric(metric_name,pdresults)
 
-        print(f"Testing dose range of {cur_dose_range[0]} to {cur_dose_range[1]}")
-        if abs(cur_metric_value-desired_metric_value)/desired_metric_value < 0.01:
-            print(f"Found the optimal dose {med_dose}")
-            return med_dose
+#         print(f"Testing dose range of {cur_dose_range[0]} to {cur_dose_range[1]}")
+#         if abs(cur_metric_value-desired_metric_value)/desired_metric_value < 0.01:
+#             print(f"Found the optimal dose {med_dose}")
+#             return med_dose
 
-        if cur_metric_value > desired_metric_value:
-            cur_dose_range[1]=med_dose
-        else:
-            cur_dose_range[0]=med_dose
+#         if cur_metric_value > desired_metric_value:
+#             cur_dose_range[1]=med_dose
+#         else:
+#             cur_dose_range[0]=med_dose
 
 
 def byLen(inpstr):
@@ -460,13 +461,45 @@ def find_dose(metric_name,desired_metric_value) -> float:
 
 
 def run_lsa():
-    lsa_params=st.session_state["lsa_params"]
-    lsa_obj=st.session_state["lsa_obj"]
+    st.toast(st.session_state.LSAvariables["sel_params"])
+    st.toast(st.session_state.LSAvariables["sel_objfunc"])
+
+    lsaparams_sel=st.session_state.LSAvariables["sel_params"]
+    lsadf=pd.DataFrame({"Parameter":lsaparams_sel,
+        "Low":[random.randint(-60,-20) for i in range(len(lsaparams_sel))],
+        "High":[random.randint(10,40) for i in range(len(lsaparams_sel))]})
+
+    lsadf["TotalSens"]=lsadf["High"]-lsadf["Low"]
+    lsadf=lsadf.sort_values(by=["TotalSens"],ascending=True)
+
+    st.session_state.messages[-1]={"id":curid,"ask":"runlsa","task":"runlsa",
+    "modelstate":st.session_state.curstate,"show_current_msg":True,"content":lsadf}
+
+
+
+@st.dialog("LSA",width="medium",on_dismiss=run_lsa)
+def lsadialog():
+    modeldf=st.session_state.modelstates[st.session_state.curstate].show()
+    modeldf=modeldf[modeldf["Type"]=="Parameter"]
+    modeldf["Select_for_LSA"]=False
+    modeldf["Lower"]=0.5
+    modeldf["Higher"]=2
+    lsaparams=st.data_editor(modeldf[["Type","Name","Value","Unit","Select_for_LSA","Lower","Higher"]],
+            disabled=["Type","Name","Unit","Lower","Higher"])
+
+    st.session_state.LSAvariables={"sel_params":[],"sel_objfunc":""}
+    for row in lsaparams.itertuples(index=False):
+        if row.Select_for_LSA:
+            st.session_state.LSAvariables["sel_params"].append(row.Name)
+
+    st.session_state.LSAvariables["sel_objfunc"]=st.selectbox("Objective function",options=["Cmax","AUC","ROlast"])
+    st.write("Note: Close the window after selections to Run LSA")
+    # st.session_state.LSAvariables={"ObjFunc"}
 
 
 def addplot():
     st.session_state.messages[-1]={"id":curid,"ask":"plot","task":"plot",
-    "modelstate":len(st.session_state.modelstates)-1,"show_current_msg":True,"content":st.session_state.chat_plotproperties}
+    "modelstate":st.session_state.curstate,"show_current_msg":True,"content":st.session_state.chat_plotproperties}
 
     print(st.session_state.messages[-1])
     # st.session_state.chat_plotproperties={}
@@ -505,12 +538,11 @@ def plottingdialog():
             plotproperties["ylabel"]=labels_cols[2].text_input("",placeholder="y label",value="Concentration")
 
             limits_cols=st.columns(4)
-            plotproperties["axeslimits"]=[
-            limits_cols[0].number_input("xmin",value=placeholder_simdata.min(axis=0)[timecol]),
-            limits_cols[1].number_input("xmax",value=placeholder_simdata.max(axis=0)[timecol]),
-            limits_cols[2].number_input("ymin",value=placeholder_simdata.min(axis=0)[anyspeciescol]),
-            limits_cols[3].number_input("ymax",value=placeholder_simdata.max(axis=0)[anyspeciescol])
-            ]
+            xlow=limits_cols[0].number_input("xmin",value=placeholder_simdata.min(axis=0)[timecol])
+            xhigh=limits_cols[1].number_input("xmax",value=placeholder_simdata.max(axis=0)[timecol])
+            ylow=limits_cols[2].number_input("ymin",value=placeholder_simdata.min(axis=0)[anyspeciescol])
+            yhigh=limits_cols[3].number_input("ymax",value=placeholder_simdata.max(axis=0)[anyspeciescol])
+            plotproperties["axeslimits"]=[xlow,xhigh,ylow,yhigh]
 
             scale_cols=st.columns(2)
             plotproperties["yscale"]=scale_cols[0].selectbox("Y scale",options=["linear","log"])
@@ -601,6 +633,8 @@ def plottingdialog():
         plt.xlabel(plotproperties["xlabel"])
         plt.ylabel(plotproperties["ylabel"])
         plt.legend()
+
+        print(plotproperties)
 
         st.pyplot(plt)
 #----------------------------- Instantiation -------------------------------
@@ -699,13 +733,15 @@ if "modelstates" not in st.session_state:
 if "curstate" not in st.session_state:
     st.session_state.curstate=0
 
+# if "modelstates" not in st.session_state:
+#     st.session_state.modelstates=[]
+
 if "simulator_modelstate" not in st.session_state:
     n_P=copy.deepcopy(st.session_state.modelstates[0].Parameters)
     n_S=copy.deepcopy(st.session_state.modelstates[0].Species)
     n_ODEs=copy.deepcopy(st.session_state.modelstates[0].odes_reactions)
     n_assignments=copy.deepcopy(st.session_state.modelstates[0].assignments_dict)
     st.session_state.simulator_modelstate=PKmodel(n_P,n_S,n_ODEs,n_assignments)
-
 
 if "doseinterval" not in st.session_state:
     st.session_state.doseinterval=7
@@ -724,32 +760,14 @@ if "doseinterval" not in st.session_state:
 if "edited_plotdata" not in st.session_state:
     st.session_state["edited_plotdata"]=pd.DataFrame()
 
-# if "simulator_modelvals" not in st.session_state:
-    # st.session_state.df_modelvals=st.session_state.modelobj.show()
-    # st.session_state.simulator_modelvals=st.session_state.simulator_modelstate.show()
-
-if "chart" not in st.session_state:
-    st.session_state.chart=None
-
-if "overlay_counter" not in st.session_state:
-    st.session_state.overlay_counter=0
-
 if "interaction_counter" not in st.session_state:
-    st.session_state.interaction_counter = 0
+    st.session_state.interaction_counter=0
 
 if "chat_plotproperties" not in st.session_state:
     st.session_state.chat_plotproperties={}
 
 if "messages" not in st.session_state: # holds the info for the entire session
     st.session_state.messages = []
-    # st.session_state.messages.append({"id":0,"ask":"show model controls","task":"showcontrols",
-    #             "modelstate":0,"show_current_msg":True})
-    # htmlstr="<ul>"
-    # for key,val in ROUTES.items():
-    #     htmlstr+=f"<li>{val[1]}</li>"
-    # htmlstr+="</ul>"
-    # st.session_state.messages[-1]["content"]=htmlstr
-
 
 if "simresults" not in st.session_state:
     st.session_state.simresults=[]
@@ -768,14 +786,51 @@ def complete_simulate_input():
     sim_doseinterval=st.session_state["sim_doseinterval"]
     sim_time=st.session_state["sim_time"]
 
-    pdresults=st.session_state.modelstates[0].simulate(Dose(sim_doseamount,interval=sim_doseinterval,species="dose"),sim_time)
+    # take the latest model paramters from the parameter table
+    updates=[]
+    for row in st.session_state.simulator_parameters.itertuples(index=False):
+        # print(f"{row.Name} {row.Value}")
+        updates.append(UpdateParameters(parametername=row.Name,value=row.Value))
+
+    modelstateobj=st.session_state.modelstates[st.session_state.curstate].getModelObj()
+
+    curmodelobj_dict={"Name":[],"Value":[]}
+
+    Param_ents,Species_ents=[],[]
+    for p in modelstateobj["parameters"]:
+        Param_ents.append(ModelEnt('p',p["name"],p["unit"],p["value"],p["comment"]))
+        curmodelobj_dict["Name"].append(p["name"])
+        curmodelobj_dict["Value"].append(p["value"])
+
+    for s in modelstateobj["species"]:
+        Species_ents.append(ModelEnt('s',s["name"],s["unit"],s["value"],s["comment"]))
+        curmodelobj_dict["Name"].append(s["name"])
+        curmodelobj_dict["Value"].append(s["value"])
+
+
+
+    # print('ToDO: Check if simulator_parameters is same as the curstate params. If not create new state')
+    curmodelobj_pd=pd.DataFrame(curmodelobj_dict)
+    # print(not curmodelobj_pd.equals(st.session_state.simulator_parameters[["Name","Value"]]))
+    if curmodelobj_pd.equals(st.session_state.simulator_parameters[["Name","Value"]]):
+        print("params are same")
+    else:
+        print("Params are not same. Creating new model state")
+        new_modelstate=PKmodel(Param_ents,Species_ents,modelstateobj["odes_reactions"],modelstateobj["assignments_dict"])
+
+        new_modelstate.update(updates)
+        st.session_state.modelstates.append(new_modelstate)
+        st.session_state.curstate=st.session_state.curstate+1
+
+    print(f"curstate = {st.session_state.curstate}")
+    pdresults=st.session_state.modelstates[st.session_state.curstate].simulate(Dose(sim_doseamount,interval=sim_doseinterval,species="dose"),sim_time)
     # print(pdresults)
 
     simparams=SimParameters(dose=sim_doseamount,doseunits="nmoles",time=sim_time,timeunits="days") 
     st.session_state.simresults.append({"simparams":{"dose":sim_doseamount,"interval":sim_doseinterval,"simtime":sim_time},"simdata":pdresults})
 
     st.session_state.messages[-1]={"id":curid,"ask":f"{userask.strip()} {sim_doseamount} nanomoles {sim_doseinterval}days {sim_time}days",
-    "task":routed["response"],"modelstate":len(st.session_state.modelstates)-1,
+    "task":routed["response"],"modelstate":st.session_state.curstate,
         "content":pdresults,"show_current_msg":False}
 
 def update_chat(newmessages):
@@ -824,6 +879,30 @@ def update_chat(newmessages):
 
             elif m["task"]=="simulate":
                 st.dataframe(m["content"].head(10),width="content")
+            elif m["task"]=="runlsa":
+                df=m["content"]
+                fig, ax = plt.subplots(figsize=(10, 6))
+
+                # 3. Create the bars
+                # Use negative values for the 'Low' side to mirror it
+                ax.barh(df['Parameter'], df['Low'], color='crimson', label='Low', align='center')
+                ax.barh(df['Parameter'], df['High'], color='teal', label='High', align='center')
+
+                # 4. Customizing the layout
+                ax.set_xlabel('Obj function')
+                ax.set_title('MOCK-UP of LSA. Only for demonstration')
+                ax.legend()
+
+                # Fix the x-axis ticks to show absolute values (removing negatives)
+                ticks = ax.get_xticks()
+                ax.set_xticklabels([int((tick)) for tick in ticks])
+
+                # Add a vertical center line
+                plt.axvline(0, color='black', linewidth=0.8)
+
+                plt.tight_layout()
+                st.pyplot(plt,width=700)
+
             elif m["task"] in ["showmodel","showstate","selectstate","showdata"]:
                 st.dataframe(m["content"],width="content")
             elif m["task"]=="dataviz":
@@ -923,6 +1002,13 @@ def update_chat(newmessages):
 
 #         st.session_state.chart=st.altair_chart(chartobj)
 
+@st.fragment
+def simulator_parameters():
+    modeldf=st.session_state.modelstates[st.session_state.curstate].show()
+    st.session_state.simulator_parameters=st.data_editor(modeldf[["Type","Name","Value","Unit"]],
+            disabled=["Type","Name","Unit"])
+
+
 #----------------------------------
 htmltxt="<p>Welcome! This is simple PK/PD model</p>"
 st.html(htmltxt)
@@ -935,53 +1021,56 @@ with leftcol:
     st.image("img/simplePK.jpg",width=500)
 
 with rightcol:
-    modeldf=st.session_state.modelstates[0].show()
-    st.data_editor(modeldf[["Type","Name","Value","Unit"]],
-            disabled=["Type","Name","Unit"])
+    modelparameditor=st.empty()
+    with modelparameditor:
+        modeldf=st.session_state.modelstates[st.session_state.curstate].show()
+        st.session_state.simulator_parameters=st.data_editor(modeldf[["Type","Name","Value","Unit"]],
+                disabled=["Type","Name","Unit"])
+    # simulator_parameters()
 
-st.subheader("Equations & Reactions")
-leftcol,rightcol=st.columns(2)
-with leftcol:
-    reaction_count=0
-    for eqinx,ode_reactions in enumerate(st.session_state.modelstates[0].odes_reactions):
-        sname=st.session_state.modelstates[0].Species[eqinx].name
+# st.subheader("Equations & Reactions")
+# leftcol,rightcol=st.columns(2)
+# with leftcol:
+#     reaction_count=0
+#     for eqinx,ode_reactions in enumerate(st.session_state.modelstates[0].odes_reactions):
+#         sname=st.session_state.modelstates[0].Species[eqinx].name
 
-        htmlstr_eq=f"<p>{eqinx+1}. d({sname})/dt = "
-        for rinx,r in enumerate(ode_reactions):
-            if st.session_state.modelstates[0].reactions_states[reaction_count+rinx]==1:
-                htmlstr_eq+=f"{r}<small style='background-color:blue;color:white'>(R{reaction_count+rinx+1})</small> "
-            else:
-                htmlstr_eq+=f"<del>{r}</del><small style='background-color:red;color:white'>(R{reaction_count+rinx+1})</small> "
-        reaction_count+=len(ode_reactions)
-        htmlstr_eq=htmlstr_eq.strip(" + ")
-        # htmlstr_eq=htmlstr_eq.strip("+")
-        htmlstr_eq+="</p>"
-        st.html(htmlstr_eq)
-        # st.text(f"{inx+1}. d({sname})/dt={ode}")
+#         htmlstr_eq=f"<p>{eqinx+1}. d({sname})/dt = "
+#         for rinx,r in enumerate(ode_reactions):
+#             if st.session_state.modelstates[0].reactions_states[reaction_count+rinx]==1:
+#                 htmlstr_eq+=f"{r}<small style='background-color:blue;color:white'>(R{reaction_count+rinx+1})</small> "
+#             else:
+#                 htmlstr_eq+=f"<del>{r}</del><small style='background-color:red;color:white'>(R{reaction_count+rinx+1})</small> "
+#         reaction_count+=len(ode_reactions)
+#         htmlstr_eq=htmlstr_eq.strip(" + ")
+#         # htmlstr_eq=htmlstr_eq.strip("+")
+#         htmlstr_eq+="</p>"
+#         st.html(htmlstr_eq)
+#         # st.text(f"{inx+1}. d({sname})/dt={ode}")
 
-# st.subheader("Reactions")
+# # st.subheader("Reactions")
 
-with rightcol:
-    selected_reactions=[1 for i in range(reaction_count)]
+# with rightcol:
+#     selected_reactions=[1 for i in range(reaction_count)]
 
-    MAX_COLS=10
-    MAX_ROWS=math.ceil(reaction_count/MAX_COLS)
+#     MAX_COLS=10
+#     MAX_ROWS=math.ceil(reaction_count/MAX_COLS)
 
-    checkbox_cols=st.columns(5)
-    for rinx in range(0,5):
-        selected_reactions[rinx]=checkbox_cols[rinx].checkbox(f"R{rinx+1}",value=True)
-    for rinx in range(5,10):
-        selected_reactions[rinx]=checkbox_cols[rinx-5].checkbox(f"R{rinx+1}",value=True)
-    for rinx in range(10,15):
-        selected_reactions[rinx]=checkbox_cols[rinx-10].checkbox(f"R{rinx+1}",value=True)
-    for rinx in range(15,20):
-        selected_reactions[rinx]=checkbox_cols[rinx-15].checkbox(f"R{rinx+1}",value=True)
-    for rinx in range(20,23):
-        selected_reactions[rinx]=checkbox_cols[rinx-20].checkbox(f"R{rinx+1}",value=True)
+#     checkbox_cols=st.columns(5)
+#     for rinx in range(0,5):
+#         selected_reactions[rinx]=checkbox_cols[rinx].checkbox(f"R{rinx+1}",value=True)
+#     for rinx in range(5,10):
+#         selected_reactions[rinx]=checkbox_cols[rinx-5].checkbox(f"R{rinx+1}",value=True)
+#     for rinx in range(10,15):
+#         selected_reactions[rinx]=checkbox_cols[rinx-10].checkbox(f"R{rinx+1}",value=True)
+#     for rinx in range(15,20):
+#         selected_reactions[rinx]=checkbox_cols[rinx-15].checkbox(f"R{rinx+1}",value=True)
+#     for rinx in range(20,23):
+#         selected_reactions[rinx]=checkbox_cols[rinx-20].checkbox(f"R{rinx+1}",value=True)
 
 
-    st.button("Select reactions",on_click=update_equations,args=[selected_reactions])
-    st.write("Uncheck reactions to turn-off in the simulation")
+#     st.button("Select reactions",on_click=update_equations,args=[selected_reactions])
+#     st.write("Uncheck reactions to turn-off in the simulation")
 
 # st.subheader("Other Observables")
 # observables_df=pd.DataFrame({"Species":[s.name for s in st.session_state.simulator_modelstate.RepAssignments],
@@ -991,240 +1080,291 @@ with rightcol:
 # st.dataframe(observables_df)
 
 
+leftpan,rightpan=st.columns([0.7,0.3])
+
 with st.container(height=700,border=False):
+    with leftpan:
+        msgblock=st.container(height=500,border=True)
+        update_chat(st.session_state.messages)
 
-    msgblock=st.container(height=500,border=True)
-    update_chat(st.session_state.messages)
+        options=st.empty()
+        with options:
+            st.write("User options come here")
 
-    options=st.empty()
-    with options:
-        st.write("User options come here")
+            # 
+        if userinput:=st.chat_input(accept_file=True,file_type='csv'):
 
-        # 
-    if userinput:=st.chat_input(accept_file=True,file_type='csv'):
+            st.session_state.interaction_counter+=1
+            curid=st.session_state.interaction_counter
 
-        st.session_state.interaction_counter+=1
-        curid=st.session_state.interaction_counter
+            userask=userinput["text"]
+            userfile=userinput["files"]
 
-        userask=userinput["text"]
-        userfile=userinput["files"]
+            # if len(userfile)>0:
+            #     st.toast(f"Uploaded file {userfile[0]}")
 
-        # if len(userfile)>0:
-        #     st.toast(f"Uploaded file {userfile[0]}")
+            # else:
+            #     st.toast(f"User message {userask}")
+                
+            routed=findaction(userask,ROUTES)
+            print(f"{userask}, {routed}")
 
-        # else:
-        #     st.toast(f"User message {userask}")
-            
-        routed=findaction(userask,ROUTES)
-        print(f"{userask}, {routed}")
-
-        # st.session_state.msgstream.append({"id":curid,"ask":userask,"task":routed["response"],
-        #     "modelstate":len(st.session_state.modelstates)-1,"show_current_msg":True})
-        st.session_state.messages.append({"id":curid,"ask":userask,"task":routed["response"],
-            "modelstate":len(st.session_state.modelstates)-1,"show_current_msg":True})
-
-
-        if routed["response"]=='showcontrols':
-            htmlstr="<ul>"
-            for key,val in ROUTES.items():
-                htmlstr+=f"<li>{val[1]}</li>"
-            htmlstr+="</ul>"
-            st.session_state.messages[-1]["content"]=htmlstr
-            st.session_state.messages[-1]["show_current_msg"]=True
-
-            st.session_state.msgstream=st.session_state.messages[-1]
-
-        elif routed['response']=='simulate':
-
-            simparams=extract_simparameters(userask)
-            if simparams.dose==0 or simparams.doseregimen=='' or simparams.time==0:
-                options.empty()
-                with options.container():
-                    with st.form("simulate_formtmp"):
-                        l,m1,m2,r=st.columns(4,vertical_alignment="bottom")
-                        with l:
-                            st.number_input("Dose (nanomoles)",key="sim_doseamount",value=3)
-
-                        with m1:
-                            st.number_input("Interval (days)",key="sim_doseinterval",value=7)
-
-                        with m2:
-                            st.number_input("Time (days)",key="sim_time",value=50)
-
-                        with r:
-                            st.form_submit_button("Simulate",on_click=complete_simulate_input)
-
-                # st.session_state.msgstream[-1]["content"]="Select options"
-                # st.session_state.messages[-1]["content"]="Select options"
-
-                st.session_state.messages[-1]["show_current_msg"]=False
-            else:
-                # reply=f"Simulated {simparams.dose} {simparams.doseunits} @{simparams.doseregimen} for {simparams.time}{simparams.timeunits}"
-
-                doseinterval=0
-                if simparams.doseregimen=='qw':
-                    doseinterval=7
-                elif simparams.doseregimen=='q2w':
-                    doseinterval=14
-                elif simparams.doseregimen=='q3w':
-                    doseinterval=21
-
-                pdresults=st.session_state.modelstates[st.session_state.curstate].simulate(Dose(simparams.dose,simparams.doseunits,doseinterval),simparams.time)
-
-                # st.session_state.msgstream.append({"ask":userask,"task":routed["response"],"content":pdresults})
-                # st.session_state.messages.append({"id":curid,"ask":userask,"task":routed["response"],"content": pdresults})
-                st.session_state.simresults.append({"simparams":simparams,"simdata":pdresults})
-
-                # st.session_state.msgstream[-1]["content"]=pdresults
-                st.session_state.messages[-1]["content"]=pdresults
-                st.session_state.msgstream=st.session_state.messages[-1]
+            # st.session_state.msgstream.append({"id":curid,"ask":userask,"task":routed["response"],
+            #     "modelstate":len(st.session_state.modelstates)-1,"show_current_msg":True})
+            st.session_state.messages.append({"id":curid,"ask":userask,"task":routed["response"],
+                "modelstate":len(st.session_state.modelstates)-1,"show_current_msg":True})
 
 
-        elif routed['response']=='plot':
-            if len(st.session_state.simresults)==0:
-                st.session_state.messages[-1]["task"]=None
-                st.session_state.messages[-1]["content"]="Please run atleast 1 simulation"
+            if routed["response"]=='showcontrols':
+                htmlstr="<ul>"
+                for key,val in ROUTES.items():
+                    htmlstr+=f"<li>{val[1]}</li>"
+                htmlstr+="</ul>"
+                st.session_state.messages[-1]["content"]=htmlstr
+                st.session_state.messages[-1]["show_current_msg"]=True
 
                 st.session_state.msgstream=st.session_state.messages[-1]
-            
-            else:
+            elif routed["response"]=="showstate":
+                statenum=int(extract_num(userask))
+                print(f"Total states are {len(st.session_state.modelstates)} asked ={statenum}")
 
-                plotparams=extract_plotparameters(userask)
-                missingVars=False
-
-                if plotparams.X=='' or plotparams.Y=='':
-                    missingVars=True
-
-                if ~missingVars:
-                    isX_species,isY_species=False,False
-                    speciesnames=[s.name for s in st.session_state.modelstates[st.session_state.curstate].Species]
-
-                    if sum([plotparams.X.lower()==sname.lower() for sname in ["time"]+speciesnames])>0:
-                        isX_species=True
-
-                    if sum([plotparams.Y.lower()==sname.lower() for sname in ["time"]+speciesnames])>0:
-                        isY_species=True
-
-
-                if (not isX_species) or (not isY_species) or (missingVars):
-                    plottingdialog()
+                if statenum >= len(st.session_state.modelstates):
+                    reply=f"Value exceeded. Please select a value between 0 and {len(st.session_state.modelstates)-1}"
+                    # st.session_state.msgstream[-1]["content"]=reply
+                    st.session_state.messages[-1]["content"]=reply
+                    st.session_state.messages[-1]["task"]=None
                 else:
-                    print(f"Plotting {plotparams.X} & {plotparams.Y}")
-                    # st.session_state.msgstream[-1]["content"]=[plotparams.X,plotparams.Y,len(st.session_state.simresults)-1]
-                    st.session_state.messages[-1]["content"]=[plotparams.X,plotparams.Y,
-                    plotparams.Xscale_log,plotparams.Yscale_log,len(st.session_state.simresults)-1]
+                    df_modelvals=st.session_state.modelstates[statenum].show()
+                    # st.session_state.msgstream[-1]["content"]=df_modelvals
+                    st.session_state.messages[-1]["content"]=df_modelvals
+                    st.session_state.messages[-1]["modelstate"]=statenum
 
+                st.session_state.msgstream=st.session_state.messages[-1]
 
+            elif routed["response"]=="selectstate":
+                statenum=int(extract_num(userask))
+                if statenum >= len(st.session_state.modelstates):
+                    reply=f"Value exceeded. Please select a value between 0 and {len(st.session_state.modelstates)-1}"
+                    # st.session_state.msgstream[-1]["content"]=reply
+                    st.session_state.messages[-1]["content"]=reply
+                else:
+                    st.session_state.curstate=statenum
+                    df_modelvals=st.session_state.modelstates[st.session_state.curstate].show()
+                    # st.session_state.msgstream[-1]["content"]=df_modelvals
+                    st.session_state.messages[-1]["content"]=df_modelvals
+                    st.session_state.messages[-1]["modelstate"]=statenum
+
+                    modelparameditor.empty()
+                    with modelparameditor:
+                        modeldf=st.session_state.modelstates[st.session_state.curstate].show()
+                        st.session_state.simulator_parameters=st.data_editor(modeldf[["Type","Name","Value","Unit"]],
+                                disabled=["Type","Name","Unit"])
+
+                st.session_state.msgstream=st.session_state.messages[-1]
+
+            elif routed['response']=='simulate':
+
+                simparams=extract_simparameters(userask)
+                if simparams.dose==0 or simparams.doseregimen=='' or simparams.time==0:
+                    options.empty()
+                    with options.container():
+                        with st.form("simulate_formtmp"):
+                            l,m1,m2,r=st.columns(4,vertical_alignment="bottom")
+                            with l:
+                                st.number_input("Dose (nanomoles)",key="sim_doseamount",value=3)
+
+                            with m1:
+                                st.number_input("Interval (days)",key="sim_doseinterval",value=7)
+
+                            with m2:
+                                st.number_input("Time (days)",key="sim_time",value=50)
+
+                            with r:
+                                st.form_submit_button("Simulate",on_click=complete_simulate_input)
+
+                    # st.session_state.msgstream[-1]["content"]="Select options"
+                    # st.session_state.messages[-1]["content"]="Select options"
+
+                    st.session_state.messages[-1]["show_current_msg"]=False
+                else:
+                    # reply=f"Simulated {simparams.dose} {simparams.doseunits} @{simparams.doseregimen} for {simparams.time}{simparams.timeunits}"
+
+                    doseinterval=0
+                    if simparams.doseregimen=='qw':
+                        doseinterval=7
+                    elif simparams.doseregimen=='q2w':
+                        doseinterval=14
+                    elif simparams.doseregimen=='q3w':
+                        doseinterval=21
+
+                    print(st.session_state.curstate)
+                    pdresults=st.session_state.modelstates[st.session_state.curstate].simulate(Dose(simparams.dose,simparams.doseunits,doseinterval),simparams.time)
+
+                    # st.session_state.msgstream.append({"ask":userask,"task":routed["response"],"content":pdresults})
+                    # st.session_state.messages.append({"id":curid,"ask":userask,"task":routed["response"],"content": pdresults})
+                    st.session_state.simresults.append({"simparams":simparams,"simdata":pdresults})
+
+                    # st.session_state.msgstream[-1]["content"]=pdresults
+                    st.session_state.messages[-1]["content"]=pdresults
                     st.session_state.msgstream=st.session_state.messages[-1]
 
-        elif routed['response']=='find':
-            if userask.find("=")>-1:
-                # find dose at rolast=0.3
 
-                doseinterval=st.session_state.simresults[-1]["simparams"]["interval"]
-                simtime=st.session_state.simresults[-1]["simparams"]["simtime"]
-                with options.container():
-                    with st.spinner(f"Using last simulation setting of dose interval={doseinterval} days and simulation time of {simtime} days", show_time=True):
-                        w=userask.split(" ")
-                        metric_name,desired_metric_value=w[-1].split("=")
-                        optimal_value=find_dose(metric_name,float(desired_metric_value))
+            elif routed['response']=='plot':
+                if len(st.session_state.simresults)==0:
+                    st.session_state.messages[-1]["task"]=None
+                    st.session_state.messages[-1]["content"]="Please run atleast 1 simulation"
 
-                reply=f"optimal dose = {optimal_value} nanomoles"
-            else:
-                w=userask.split(" ")
-                metric_name=w[-1]
-                if metric_name not in ["cmax","auc","rolast"]:
-                    reply="Sorry metric is not defined"
+                    st.session_state.msgstream=st.session_state.messages[-1]
+                
                 else:
 
-                    if metric_name=="rolast":
-                        xcol="tc"
-                        ycol="d_t_c"
+                    plotparams=extract_plotparameters(userask)
+                    missingVars=False
+
+                    if plotparams.X=='' or plotparams.Y=='':
+                        missingVars=True
+
+                    if ~missingVars:
+                        isX_species,isY_species=False,False
+                        speciesnames=[s.name for s in st.session_state.modelstates[st.session_state.curstate].Species]
+
+                        if sum([plotparams.X.lower()==sname.lower() for sname in ["time"]+speciesnames])>0:
+                            isX_species=True
+
+                        if sum([plotparams.Y.lower()==sname.lower() for sname in ["time"]+speciesnames])>0:
+                            isY_species=True
+
+
+                    if (not isX_species) or (not isY_species) or (missingVars):
+                        plottingdialog()
                     else:
-                        xcol="time"
-                        ycol="dc"
+                        print(f"Plotting {plotparams.X} & {plotparams.Y}")
+                        # st.session_state.msgstream[-1]["content"]=[plotparams.X,plotparams.Y,len(st.session_state.simresults)-1]
+                        st.session_state.messages[-1]["content"]=[plotparams.X,plotparams.Y,
+                        plotparams.Xscale_log,plotparams.Yscale_log,len(st.session_state.simresults)-1]
 
-                    metricunit={"cmax":"nanomoles/liter","auc":"nanomole/liter*days","rolast":"%"}
 
-                    processed_df=pd.DataFrame({"xdata":st.session_state.simresults[-1]["simdata"][xcol],
-                        "ydata":st.session_state.simresults[-1]["simdata"][ycol]})
-                    metric_value=find_metric(metric_name,processed_df)
-                    reply=f"Value of {metric_name} is {metric_value} {metricunit[metric_name]}\n\n"
+                        st.session_state.msgstream=st.session_state.messages[-1]
+            elif routed["response"]=="runlsa":
+                lsadialog()
+            elif routed['response']=='find':
+                if userask.find("=")>-1:
+                    # find dose at rolast=0.3
 
-            st.session_state.messages[-1]["content"]=reply
-            st.session_state.msgstream=st.session_state.messages[-1]
-        elif routed['response']=="runlsa":
-            options.empty()
-            with options.container():
-                with st.form("form_lsa"):
-                    l,m,r=st.columns([0.5,0.3,0.2],vertical_alignment="bottom")
-                    with l:
-                        st.multiselect("Parameter",options=[p.name for p in st.session_state.modelstates[-1].Parameters],key="lsa_params")
-                    with m:
-                        st.selectbox("Objective",options=[s.name for s in st.session_state.modelstates[-1].Species],key="lsa_obj")
-                    with r:
-                        st.form_submit_button("Run",on_click=run_lsa)
+                    doseinterval=st.session_state.simresults[-1]["simparams"]["interval"]
+                    simtime=st.session_state.simresults[-1]["simparams"]["simtime"]
+                    with options.container():
+                        with st.spinner(f"Using last simulation setting of dose interval={doseinterval} days and simulation time of {simtime} days", show_time=True):
+                            w=userask.split(" ")
+                            metric_name,desired_metric_value=w[-1].split("=")
+                            optimal_value=find_dose(metric_name,float(desired_metric_value))
 
-        else:
-            reply="Sorry did not understand what you need"
-            # st.session_state.msgstream.append({"ask":userask,"task":None,"content":reply})
-            # st.session_state.messages.append({"ask":userask,"task":None,"content":reply})
+                    reply=f"optimal dose = {optimal_value} nanomoles"
+                else:
+                    w=userask.split(" ")
+                    metric_name=w[-1]
+                    if metric_name not in ["cmax","auc","rolast"]:
+                        reply="Sorry metric is not defined"
+                    else:
 
-            # st.session_state.msgstream[-1]["content"]=reply
-            st.session_state.messages[-1]["content"]=reply
-            st.session_state.msgstream=st.session_state.messages[-1]
+                        if metric_name=="rolast":
+                            xcol="tc"
+                            ycol="d_t_c"
+                        else:
+                            xcol="time"
+                            ycol="dc"
 
-    with msgblock:
-        # for m in st.session_state.msgstream:
-        if len(st.session_state.msgstream)>0:
+                        metricunit={"cmax":"nanomoles/liter","auc":"nanomole/liter*days","rolast":"%"}
 
-            m=st.session_state.msgstream
-            if (m["task"] not in ["note","spinner","section","ref"]) and (len(m["ask"])>0):
-                with st.chat_message("user"):
-                    st.markdown(f"{m["id"]}. {m["ask"]}")
-                # st.markdown(f"{m["id"]}")
+                        processed_df=pd.DataFrame({"xdata":st.session_state.simresults[-1]["simdata"][xcol],
+                            "ydata":st.session_state.simresults[-1]["simdata"][ycol]})
+                        metric_value=find_metric(metric_name,processed_df)
+                        reply=f"Value of {metric_name} is {metric_value} {metricunit[metric_name]}\n\n"
 
-                st.badge(f"State: {m["modelstate"]}")
+                st.session_state.messages[-1]["content"]=reply
+                st.session_state.msgstream=st.session_state.messages[-1]
+            elif routed['response']=="runlsa":
+                options.empty()
+                with options.container():
+                    with st.form("form_lsa"):
+                        l,m,r=st.columns([0.5,0.3,0.2],vertical_alignment="bottom")
+                        with l:
+                            st.multiselect("Parameter",options=[p.name for p in st.session_state.modelstates[-1].Parameters],key="lsa_params")
+                        with m:
+                            st.selectbox("Objective",options=[s.name for s in st.session_state.modelstates[-1].Species],key="lsa_obj")
+                        with r:
+                            st.form_submit_button("Run",on_click=run_lsa)
 
-            if m["task"] in ["find",None,"update"]:
-                with st.chat_message("assistant"):
-                    st.markdown(m["content"])
-            elif m["task"]=="note":
-                st.text(f"{m['content']}")
-            elif m["task"]=="section":
-                st.header(m["content"],divider="grey")
-            elif m["task"]=="plot":
-                xvar,yvar,xscale_log,yscale_log,simid=m["content"]
-                st.badge(f"Simid: {simid+1}",color="orange")
-                simdata=st.session_state.simresults[simid]["simdata"]
-                simparams=st.session_state.simresults[simid]["simparams"]
-
-                title=f"{simparams.dose} {simparams.doseunits} @{simparams.doseregimen} for {simparams.time}{simparams.timeunits}"
-                fig, ax = plt.subplots()
-
-                st.toast(f"yscale_log={yscale_log}")
-                ax.plot(simdata[xvar],simdata[yvar],color="b")
-                if yscale_log==1:
-                    ax.set_yscale("log")
-
-                ax.set_title(title,size=10)
-                ax.set_xlabel(xvar,size=10)
-                ax.set_ylabel(yvar,size=10)
-
-                st.pyplot(fig,width=500)
-
-            elif m["task"]=="simulate":
-                st.dataframe(m["content"].head(10))
-            elif m["task"] in ["showmodel","showstate","selectstate"]:
-                st.dataframe(m["content"])
             else:
-                st.html(m["content"])
+                reply="Sorry did not understand what you need"
+                # st.session_state.msgstream.append({"ask":userask,"task":None,"content":reply})
+                # st.session_state.messages.append({"ask":userask,"task":None,"content":reply})
 
-        st.session_state.msgstream=[]
+                # st.session_state.msgstream[-1]["content"]=reply
+                st.session_state.messages[-1]["content"]=reply
+                st.session_state.msgstream=st.session_state.messages[-1]
 
+        with msgblock:
+            # for m in st.session_state.msgstream:
+            if len(st.session_state.msgstream)>0:
 
-st.write("Use the chat to interact with the model. Try following messages to get started")
-htmltxt="<ol><li>Type 'simulate' and enter (Change dose)</li> <li>Type 'plot'</li> <li>Type 'find rolast' (Receptor Occupancy at the last time point)</li> <li>Type 'find auc' (Finds Area Under the Cocnentration-time Curve)</li> <li>Type 'find dose where rolast=10' (Finds the dose where RO=10%)</li></ol>"
-st.html(htmltxt)
+                m=st.session_state.msgstream
+                if (m["task"] not in ["note","spinner","section","ref"]) and (len(m["ask"])>0):
+                    with st.chat_message("user"):
+                        st.markdown(f"{m["id"]}. {m["ask"]}")
+                    # st.markdown(f"{m["id"]}")
+
+                    st.badge(f"State: {m["modelstate"]}")
+
+                if m["task"] in ["find",None,"update"]:
+                    with st.chat_message("assistant"):
+                        st.markdown(m["content"])
+                elif m["task"]=="note":
+                    st.text(f"{m['content']}")
+                elif m["task"]=="section":
+                    st.header(m["content"],divider="grey")
+                elif m["task"]=="plot":
+                    xvar,yvar,xscale_log,yscale_log,simid=m["content"]
+                    st.badge(f"Simid: {simid+1}",color="orange")
+                    simdata=st.session_state.simresults[simid]["simdata"]
+                    simparams=st.session_state.simresults[simid]["simparams"]
+
+                    title=f"{simparams.dose} {simparams.doseunits} @{simparams.doseregimen} for {simparams.time}{simparams.timeunits}"
+                    fig, ax = plt.subplots()
+
+                    st.toast(f"yscale_log={yscale_log}")
+                    ax.plot(simdata[xvar],simdata[yvar],color="b")
+                    if yscale_log==1:
+                        ax.set_yscale("log")
+
+                    ax.set_title(title,size=10)
+                    ax.set_xlabel(xvar,size=10)
+                    ax.set_ylabel(yvar,size=10)
+
+                    st.pyplot(fig,width=500)
+
+                elif m["task"]=="simulate":
+                    st.dataframe(m["content"].head(10))
+                elif m["task"] in ["showmodel","showstate","selectstate"]:
+                    st.dataframe(m["content"])
+                else:
+                    st.html(m["content"])
+
+            st.session_state.msgstream=[]
+
+    with rightpan:
+        with st.container(height=500,border=False):
+            st.markdown("Use the chat to interact with the model. Try following messages to get started")
+            st.markdown("1. Type 'simulate' -> Select dose, dose interval, and sim time. ***Simulates the model***")
+            st.markdown("2. Type 'find auc'. ***Finds Area Under the Cocnentration-time Curve***")
+            st.markdown("3. Type 'find rolast'. ***Finds Receptor Occupancy at the last time point***")
+            st.markdown("4. Type 'find dose where rolast=95'. ***Finds the dose where RO=95%***")
+            st.markdown("5. runlsa -> select parameters and objective function. ***Runs LSA for selected parameters and plots a tornado plot***")
+            st.markdown("6. Change parameter CL_D to 0.1 in the table above. ***Increases clearance of drug in Central compartment***")
+            st.markdown("7. Type 'simulate' -> Select dose, dose interval, and sim time. ***Simulates the model with the latest parameters. Notice the State banner changes***")
+            st.markdown("4. Type 'find dose where rolast=95'. ***Finds the dose where RO=95% in new model state***")
+            st.markdown("7. Type 'showstate 0'. ***Lists the model in the previous state***")
+            st.markdown("7. Type 'selectstate 0'. ***Changes the model to the previous state. Notice the change in state banner***")
+            st.markdown("7. Type 'plot' -> select the simulations, x and y variables, legends, click plot and close. ***plots the selected variables***")
 
 
