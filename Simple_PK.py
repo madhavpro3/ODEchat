@@ -1109,7 +1109,7 @@ with st.container(height=700,border=False):
             # st.session_state.msgstream.append({"id":curid,"ask":userask,"task":routed["response"],
             #     "modelstate":len(st.session_state.modelstates)-1,"show_current_msg":True})
             st.session_state.messages.append({"id":curid,"ask":userask,"task":routed["response"],
-                "modelstate":len(st.session_state.modelstates)-1,"show_current_msg":True})
+                "modelstate":st.session_state.curstate,"show_current_msg":True})
 
 
             if routed["response"]=='showcontrols':
@@ -1363,6 +1363,7 @@ with st.container(height=700,border=False):
             st.markdown("7. Type 'showstate 0'. ***Lists the model in the previous state***")
             st.markdown("7. Type 'selectstate 0'. ***Changes the model to the previous state. Notice the change in state banner***")
             st.markdown("7. Type 'plot' -> select the simulations, x and y variables, legends, click plot and close. ***plots the selected variables***")
+
 
 
 
