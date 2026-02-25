@@ -1351,18 +1351,24 @@ with st.container(height=700,border=False):
 
     with rightpan:
         with st.container(height=500,border=False):
+            
             st.markdown("Use the chat to interact with the model. Try following messages to get started")
+
             st.markdown("1. Type 'simulate' -> Select dose, dose interval, and sim time. ***Simulates the model***")
             st.markdown("2. Type 'find auc'. ***Finds Area Under the Cocnentration-time Curve***")
             st.markdown("3. Type 'find rolast'. ***Finds Receptor Occupancy at the last time point***")
             st.markdown("4. Type 'find dose where rolast=95'. ***Finds the dose where RO=95%***")
-            st.markdown("5. runlsa -> select parameters and objective function. ***Runs LSA for selected parameters and plots a tornado plot***")
+            st.markdown("5. runlsa -> select parameters and objective function. ***Runs LSA for selected parameters and plots a tornado plot***") 
+            
+            st.markdown("## Reproducibility")
             st.markdown("6. Change parameter CL_D to 0.1 in the table above. ***Increases clearance of drug in Central compartment***")
             st.markdown("7. Type 'simulate' -> Select dose, dose interval, and sim time. ***Simulates the model with the latest parameters. Notice the State banner changes***")
-            st.markdown("4. Type 'find dose where rolast=95'. ***Finds the dose where RO=95% in new model state***")
-            st.markdown("7. Type 'showstate 0'. ***Lists the model in the previous state***")
-            st.markdown("7. Type 'selectstate 0'. ***Changes the model to the previous state. Notice the change in state banner***")
-            st.markdown("7. Type 'plot' -> select the simulations, x and y variables, legends, click plot and close. ***plots the selected variables***")
+            st.markdown("8. Type 'find dose where rolast=95'. ***Finds the dose where RO=95% in new model state***")
+            st.markdown("9. Type 'showstate 0'. ***Lists the model in the previous state***")
+            st.markdown("10. Type 'selectstate 0'. ***Changes the model to the previous state. State banner changes***")
+
+            st.markdown("## Plotting")
+            st.markdown("11. Type 'plot' -> select the simulations, x and y variables, legends, click plot and close. ***plots the selected variables***")
 
 
 
