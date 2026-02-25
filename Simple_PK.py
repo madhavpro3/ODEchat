@@ -461,9 +461,6 @@ def find_dose(metric_name,desired_metric_value) -> float:
 
 
 def run_lsa():
-    st.toast(st.session_state.LSAvariables["sel_params"])
-    st.toast(st.session_state.LSAvariables["sel_objfunc"])
-
     lsaparams_sel=st.session_state.LSAvariables["sel_params"]
     lsadf=pd.DataFrame({"Parameter":lsaparams_sel,
         "Low":[random.randint(-60,-20) for i in range(len(lsaparams_sel))],
@@ -1366,5 +1363,6 @@ with st.container(height=700,border=False):
             st.markdown("7. Type 'showstate 0'. ***Lists the model in the previous state***")
             st.markdown("7. Type 'selectstate 0'. ***Changes the model to the previous state. Notice the change in state banner***")
             st.markdown("7. Type 'plot' -> select the simulations, x and y variables, legends, click plot and close. ***plots the selected variables***")
+
 
 
