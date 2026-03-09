@@ -671,7 +671,7 @@ def runworkflow():
     else:
         filename_mouse_tgi="Mouse_TGI_H1975_A1mcMMAF.csv"
 
-    cyno_pk=pd.read_csv("user_uploads\\"+filename_cyno_pk)
+    cyno_pk=pd.read_csv("user_uploads/"+filename_cyno_pk)
     cyno_pk=cyno_pk[~cyno_pk["ADC_ug_ml"].isna()]
 
     st.session_state.messages.append({"id":idnum,"ask":"","task":"section",
@@ -838,7 +838,7 @@ def runworkflow():
     newmessages.append({"id":idnum,"ask":"","task":"note",
         "modelstate":len(st.session_state.modelstates)-1,"content":"Units are incorrect in the publication. It should be ug/ml not nM"})
 
-    mouse_pk=pd.read_csv("user_uploads\\"+filename_mouse_pk)
+    mouse_pk=pd.read_csv("user_uploads/"+filename_mouse_pk)
     mouse_pk=mouse_pk[~mouse_pk["ADC_nM"].isna()]
 
     # plot data: colored by dose
@@ -876,7 +876,7 @@ def runworkflow():
         "modelstate":len(st.session_state.modelstates)-1,"show_current_msg":True,"content":"Mouse PK/TGI visualization"})
 
     # view data
-    mouse_tgi=pd.read_csv("user_uploads\\"+filename_mouse_tgi)
+    mouse_tgi=pd.read_csv("user_uploads/"+filename_mouse_tgi)
     mouse_tgi=mouse_tgi[~mouse_tgi["TV_mm3"].isna()]
     # plot data: colored by dose
     mouse_tgi_expdata=pd.DataFrame({"xdata":mouse_tgi["Time_days"],"ydata":mouse_tgi["TV_mm3"],"legend":mouse_tgi["Dose_mpk"]})
@@ -1802,5 +1802,6 @@ if userask:=st.chat_input():
 # plot simdata (time,CentralConc) - automatically plots by group
 # plot simdata (time,TV) - automatically plots by group
 # plot simdata (time,SLD) - automatically plots by group
+
 
 ## Dose selection & Justification
