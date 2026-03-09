@@ -927,7 +927,7 @@ def runworkflow():
     st.session_state.modelstates.append(mouse_modelstate)
 
 
-    calib_content="V1_ADC=66.6 mL/Kg, V2_ADC=..."
+    calib_content="V1_ADC=66.6 mL/Kg"
     st.session_state.messages.append({"id":idnum,"ask":"","task":"note",
         "modelstate":len(st.session_state.modelstates)-1,"show_current_msg":True,"content":"Estimated parameters: "+calib_content})
     newmessages.append({"id":idnum,"ask":"","task":"note",
@@ -1208,7 +1208,7 @@ def runworkflow():
     #------------------------------------------------
     # Competitor molecule comparison
     #------------------------------------------------
-    filename_competitorinfo="docs\\a5T4targetingADCs.csv"
+    filename_competitorinfo="docs/a5T4targetingADCs.csv"
     competitorinfo_df=pd.read_csv(filename_competitorinfo);
 
     notetxt="Following 5T4 targeting ADCs have been tested in clinic with different types of payloads and RP2D ranged from 1-2.5mpk"
@@ -1805,3 +1805,4 @@ if userask:=st.chat_input():
 
 
 ## Dose selection & Justification
+
