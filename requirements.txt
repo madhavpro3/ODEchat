@@ -1,0 +1,4 @@
+streamlit
+basico
+pandas
+matplotlib
