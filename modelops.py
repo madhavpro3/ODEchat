@@ -3,8 +3,9 @@
 from basico import model_io,model_info,task_timecourse
 import pandas as pd
 import math
+import frontendops as fo
 
-def parseequations(eqs:str,projectname:str):
+def parseequations(eqs:str,projectname:str,repassignments:dict=None):
 	model_io.new_model(name=projectname)
 	indvequations=eqs.split("\n")
 
@@ -12,6 +13,12 @@ def parseequations(eqs:str,projectname:str):
 		model_info.add_equation(eqn=indveq)
 
 	model_species=model_info.get_species().index.tolist()
+
+	for repa,expr in repassignments.items():
+		if repa in model_species:
+			model_info.set_species(repa,type="assignment",expression=expr)
+		else:
+			model_info.add_species(repa,type="assignment",expression=expr)
 
 	# Setting all inital_concentration to 0
 	for s in model_species:
@@ -121,3 +128,18 @@ def lsa(modelstr:str,parameters:dict,obsspecies:str,simparams:dict):
 	lsaresults=pd.DataFrame(lsaresults)
 
 	return lsaresults
+
+def nca(df,columnmap):
+	timecol=columnmap["time"]
+	conccol=columnmap["concentration"]
+	dosecol=columnmap["dose"]
+
+
+	doses,cmaxes,aucs=[],[],[]
+	for curdose,curdf in df.groupby(dosecol):
+		doses.append(curdose)
+		cmaxes.append(fo.find_metric("cmax",curdf,None,{"timespecies":timecol,"drugspecies":conccol}))
+		aucs.append(fo.find_metric("auc",curdf,None,{"timespecies":timecol,"drugspecies":conccol}))
+
+	return pd.DataFrame({"Dose":doses,"Cmax":cmaxes,"AUC":aucs})
+

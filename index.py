@@ -88,7 +88,6 @@ def updatemsgblock(chatmsg):
 
                 allplotdata=[]
                 if msg["action"]=="runlsa":
-                    print(plotproperties)
                     cursimid=plotproperties["simid"][0]
                     curplotdata=pd.DataFrame({"xdata":[],"ydata_high":[],"ydata_low":[]})
                     curplotdata["xdata"]=st.session_state["datadb"][cursimid-1]["data"][plotproperties["xdata"][0]]
@@ -98,17 +97,34 @@ def updatemsgblock(chatmsg):
                 else:
                     for inx,cursimid in enumerate(plotproperties["simid"]):
                         curplotdata=pd.DataFrame({"xdata":[],"ydata":[],"legend":[],"style":[]})
+
                         curplotdata["xdata"]=st.session_state["datadb"][cursimid-1]["data"][plotproperties["xdata"][inx]]
                         curplotdata["ydata"]=st.session_state["datadb"][cursimid-1]["data"][plotproperties["ydata"][inx]]
 
+                        if 'Group' in st.session_state["datadb"][cursimid-1]["data"].columns:
+                            curplotdata["Group"]=st.session_state["datadb"][cursimid-1]["data"]["Group"]
+
+                        if "axeslimits" not in plotproperties:
+                            plotproperties["axeslimits"]=[min(curplotdata["xdata"]),max(curplotdata["xdata"]),
+                            min(curplotdata["ydata"]),max(curplotdata["ydata"])]
+
                         allplotdata.append(curplotdata)
+
 
                 fig=plt.figure()
                 for dinx,data in enumerate(allplotdata):
                     if plotproperties["plotstyle"][dinx]=="-":
-                        plt.plot("xdata","ydata",data=data,label=plotproperties["legend"][dinx])
+                        if 'Group' in data.columns:
+                            for groupval, group_df in data.groupby("Group"):
+                                plt.plot("xdata","ydata",data=group_df,label=f"{plotproperties["legend"][dinx]}_{groupval}")
+                        else:
+                            plt.plot("xdata","ydata",data=data,label=plotproperties["legend"][dinx])
                     elif plotproperties["plotstyle"][dinx]==":":
-                        plt.scatter("xdata","ydata",data=data,label=plotproperties["legend"][dinx])
+                        if 'Group' in data.columns:
+                            for groupval, group_df in data.groupby("Group"):
+                                plt.scatter("xdata","ydata",data=group_df,label=f"{plotproperties["legend"][dinx]}_{groupval}")
+                        else:
+                            plt.scatter("xdata","ydata",data=data,label=plotproperties["legend"][dinx])
                     else:
                         plt.barh(y=[i+0.05 for i in range(len(data["xdata"]))],width=data["ydata_low"],height=0.1,tick_label=data["xdata"],label="Low")
                         plt.barh(y=[i-0.05 for i in range(len(data["xdata"]))],width=data["ydata_high"],height=0.1,tick_label=data["xdata"],label="High")
@@ -129,10 +145,17 @@ def runaction_updatedb(idnum,task,action,actionparams):
     msg={"id":idnum,"userask":task,"action":action,"actionparams":actionparams,
 "plotid":-1,"dataid":-1,"stateid":st.session_state["curmodelstate"],"contentid":-1}
 
-    modelstr=st.session_state["statedb"][st.session_state["curmodelstate"]]
+    modelstr=""
+    if len(st.session_state["statedb"])>0:
+        modelstr=st.session_state["statedb"][st.session_state["curmodelstate"]]
 
     if action=="find":
         actionparams["df"]=st.session_state["datadb"][actionparams["dataid"]-1]["data"]
+
+    if action=="runnca":
+        actionparams["data"]=st.session_state["datadb"][actionparams["dataid"]-1]["data"]
+        actionparams["columnmap"]={"time":actionparams["time"],"concentration":actionparams["concentration"],
+        "dose":actionparams["dose"]}
 
     actionresult=fo.takeaction(action,actionparams,modelstr)
 
@@ -175,7 +198,7 @@ def runaction_updatedb(idnum,task,action,actionparams):
 
 def verify_eq():
     st.session_state["verify_eq_btnstate"]=True
-
+#----------------------------- Dialogs ----------------------------------------
 
 @st.dialog("Simulation inputs",width="medium")
 def simulate_input_dialog():
@@ -350,8 +373,13 @@ def plot_dialog():
                     plt.scatter("xdata","ydata",data=data,label=plotproperties["legend"][dinx])
 
             plt.title(plotproperties["title"])
-            plt.xlim(plotproperties["axeslimits"][:2])
-            plt.ylim(plotproperties["axeslimits"][2:])
+            if "axeslimits" in plotproperties:
+                plt.xlim(plotproperties["axeslimits"][:2])
+                plt.ylim(plotproperties["axeslimits"][2:])
+            else:
+                plt.xlim([min(allplotdata["xdata"]),max(allplotdata["xdata"])])
+                plt.ylim([min(allplotdata["ydata"]),max(allplotdata["ydata"])])
+
             plt.yscale(plotproperties["yscale"])
             plt.xlabel(plotproperties["xlabel"])
             plt.ylabel(plotproperties["ylabel"])
@@ -362,6 +390,135 @@ def plot_dialog():
         if st.button("Confirm"):
             st.session_state["temp_parameters"]["actionparams"]=plotproperties
             st.rerun()
+
+
+
+@st.dialog("Workflow",width="medium")
+def create_workflow_project():
+    wftype=st.selectbox("Type",options=["Molecule exploration","ADC dose translation"])
+
+    # Workflow options
+    # Molecule exploration: Molecule type mAb/Bispec/ADC, Benchmark, Target location
+    # ADC Dose translation: Upload NHP PK, Upload Mouse-PK, Upload Mouse-TGI
+    if wftype=="ADC dose translation":
+        filepos_cynopk,filepos_mousepk,filepos_mousetgi=st.columns(3)
+        with filepos_cynopk:
+            NHPPK_file=st.file_uploader("NHP PK")
+
+        with filepos_mousepk:
+            MousePK_file=st.file_uploader("Mouse PK")
+
+        with filepos_mousetgi:
+            MouseTGI_file=st.file_uploader("Mouse TGI")
+
+        md_note="Ensure the files are .csv with following columns 1)NHP PK:  "
+
+
+
+        # f"simulate dose_species=Dc dose_nmoles={RP2D_nmoles} interval_days=21 simtime_days=360",
+        # "find ro t=21 dataid=2 time='Time' drug='Dc' target='Tc' complex='D_T_c'",
+        # f"runlsa parameters=['CL_D','Vc','Koff'] lowvalues=[0.1,1.805,0.1] highvalues=[0.4,7.22,10] observable='D_T_c' dose_species='Dc' dose_nmoles={RP2D_nmoles} simtime_days=21 interval_days=30",
+        # "section: Analysis of benchmark molecule",
+        # f"update Vc={bm_Vc} Vp={bm_Vp} Q_D={bm_Q} CL_D={bm_CL} Kon={bm_Kon} Koff={bm_Koff}",
+        # f"simulate dose_species=Dc dose_nmoles={RP2D_nmoles} interval_days=21 simtime_days=360",
+        # "find ro t=21 dataid=5 time='Time' drug='Dc' target='Tc' complex='D_T_c'",
+        # "section: Comparison of molecules",                
+        # "plot simid=[2, 5] xdata=['Time', 'Time'] ydata=['Dc', 'Dc'] legend=['Novel', 'Benchmark'] plotstyle=['-', '-'] axeslimits=[0, 180, 0, 5000] title='' xlabel='Time (days)' ylabel='Drug Concentration (nM)' yscale='linear'",
+        # "plot simid=[2, 5] xdata=['Time', 'Time'] ydata=['D_T_c', 'D_T_c'] legend=['Novel', 'Benchmark'] plotstyle=['-', '-'] axeslimits=[0, 180, 0, 100] title='' xlabel='Time (days)' ylabel='Complex Concentration (nM)' yscale='linear'"
+
+
+    elif wftype=="Molecule exploration":
+        pkpd_options_cols=st.columns(3)
+        with pkpd_options_cols[1]:
+            modality=st.selectbox("Modality",options=["mAb","ADC","Bi-specific"])
+
+        if modality=="Bi-specific":
+            target1=st.selectbox("Target1",options=["soluble","cellbound","cytokine"])
+            target2=st.selectbox("Target2",options=["soluble","cellbound","cytokine"])
+        else:
+            target1=st.selectbox("Target",options=["None","soluble","cellbound","cytokine"])
+            targetloc1=st.selectbox("Target Location",options=["Central","Peripheral"])
+
+        benchmark=st.selectbox("Benchmark",options=["Enhertu (HER2-DXD)","Keytruda (PD1)"])
+
+    if st.button("Create"):
+        if wftype=="ADC dose translation":
+            if NHPPK_file:
+                df_NHPPK = pd.read_csv(NHPPK_file)
+                runaction_updatedb(1,f"upload {NHPPK_file}","upload",{"data":df_NHPPK})
+
+            if MousePK_file:
+                df_MousePK = pd.read_csv(MousePK_file)
+                runaction_updatedb(2,f"upload {MousePK_file}","upload",{"data":df_MousePK})
+
+            if MouseTGI_file:
+                df_MouseTGI = pd.read_csv(MouseTGI_file)
+                runaction_updatedb(3,f"upload {MouseTGI_file}","upload",{"data":df_MouseTGI})
+
+            workflow=[
+            "show controls",
+            "show model",
+            "section: Data Visualization",
+            "plot simid=[1] xdata=['Time_days'] ydata=['ADC_ug_ml'] plotstyle=['-'] legend=['NHP PK'] title='NHP PK' xlabel='Time (days)' ylabel='Drug Concentration (ug/ml)' yscale='linear'",
+            "plot simid=[2] xdata=['Time_days'] ydata=['ADC_nM'] plotstyle=['-'] legend=['Mouse PK'] title='Mouse PK' xlabel='Time (days)' ylabel='Drug Concentration (nM)' yscale='linear'",
+            "plot simid=[3] xdata=['Time_days'] ydata=['TV_mm3'] plotstyle=['-'] legend=['Mouse TGI'] title='Mouse TGI' xlabel='Time (days)' ylabel='TV (mm3)' yscale='linear'",
+            "runnca dataid=[1] time='Time_days' concentration='ADC_ug_ml' dose='Dose_mpk'",
+            "runnca dataid=[2] time='Time_days' concentration='ADC_nM' dose='Dose_mpk'",
+            ]
+
+            # Cyno PK calibration
+            # Mouse PK calibdation
+            # Mouse TGI calibration
+
+            # PK translation to Human from Cyno
+            # PD translation to Human from Mouse
+
+            # Human simulations
+
+            workflow_listed=[f"{i+1}. {wf}" for i,wf in enumerate(workflow)]
+            workflow_editable=("\n").join(workflow_listed)
+            tasks=st.text_area(label="Tasks",value=workflow_editable,height="content")
+
+            ADCPKPDeq="""
+            d[ADCca]/dt = -(CL_ADC/V1_ADC)*[ADCca] - (CLD_ADC/V1_ADC)*[ADCca] + (CLD_ADC/V2_ADC)*[ADCpa]
+            d[ADCpa]/dt = (CLD_ADC/V1_ADC)*[ADCca] - (CLD_ADC/V2_ADC)*[ADCpa]
+            d[TV1]/dt = (kgex*(1-(([TV1]+[TV2]+[TV3]+[TV4])/vmax))/((1 + (kgex*([TV1]+[TV2]+[TV3]+[TV4])/kg)^psi)^(1/psi)) - Kmax*([ADCca]*0.459/V1_ADC)/(KC50 + ([ADCca]*0.459/V1_ADC)))*[TV1]
+            d[TV2]/dt = (Kmax*([ADCca]*0.459/V1_ADC)/(KC50 + ([ADCca]*0.459/V1_ADC)))*[TV1] - ([TV2]/tau)
+            d[TV3]/dt = ([TV2]-[TV3])/tau
+            d[TV4]/dt = ([TV3]-[TV4])/tau
+            """
+
+            repeatedassignments={"ADCcc":"[ADCca]/V1_ADC","ADCcc_ugml":"[ADCcc]*0.153",
+            "TotalTV":"[TV1]+[TV2]+[TV3]+[TV4]"}
+
+            curprojects=st.session_state["currentprojects"]
+            modelobj=mo.parseequations(ADCPKPDeq,f"proj {len(curprojects)+1}",repeatedassignments)
+
+            species_mm3=["TV1","TV2","TV3","TV4"]
+            species_nmoles=["ADCca","ADCpa"]
+            for s_nmoles in species_nmoles:
+                model_info.set_species(s_nmoles,model=modelobj,initial_concentration=0,unit="nanomoles")
+            for s_mm3 in species_mm3:
+                model_info.set_species(s_mm3,model=modelobj,initial_concentration=0,unit="mm3")
+
+            modelstr=model_io.save_model_to_string(model=modelobj)
+            st.session_state["statedb"].append(modelstr)
+            st.session_state["curmodelstate"]=len(st.session_state["statedb"])-1
+
+
+        # Run Tasks
+        tasks_list=tasks.split("\n")
+        for taskinx,task in enumerate(tasks_list):
+            action,actionparams=fo.parseuserinput(task)
+
+            print(f"{taskinx+1} {action} {actionparams}")
+
+            msg=runaction_updatedb(3+taskinx,task,action,actionparams)
+            st.session_state["chatdb"].append(msg)
+
+        st.rerun()
+
+#----------------------------- End of Dialogs ----------------------------------------
 
 
 
@@ -385,13 +542,21 @@ with projects_panel:
 
     curprojects=st.session_state["currentprojects"]
 
-    if st.button("Create Project",on_click=fo.createproject,
+    if st.button("Create Blank Project",on_click=fo.createproject,
         args=["proj "+str(len(curprojects)+1),curprojects]):
 
         # Note: Dont have to explicitly add to session_state because the page is rerun adn latest is taken from the DB
         # st.session_state["currentprojects"].append({"name":"proj "+str(len(curprojects)+1),"id":len(curprojects)+1})
 
         st.toast("New project created!")
+
+    if st.button("Create Workflow Project"):
+        # Open a dialogue asking for the details on the workflow
+        # Current options: Molecule exploration, ADC dose prediction
+
+        create_workflow_project()
+        st.toast("New workflow project created!")
+
 
     for p in st.session_state["currentprojects"]:
         if st.button(p["name"]):
