@@ -26,6 +26,7 @@ ROUTES={"showcontrols":[["view","show","list","controls","control"],"list contro
 	"showstate":[["show","state","view"],"show model state (number): show the details of the selected model state"],
 	"selectstate":[["select","state","choose"],"select model state (number): selects the model state"],
 	"runlsa":[["run","lsa","runlsa"],"Run Local Sensitivity Analysis"],
+	"runnca":[["run","nca","runnca"],"Run Non Compartmental Analysis"],
 	"note":[["note","notes","note:","notes:","assumption","assuming","assume"],"note (text): add analysis notes"],
 	"section":[["section"],"section: section header"]
 }
@@ -118,25 +119,29 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 		return {"plot":None,"data":None,"content":ans,"modelstr":None}
 	elif action=="runlsa":
 		lsa_df=mo.lsa(modelstr,actionparams["parameters"],actionparams["observable"],actionparams["simparams"])
-
 		return {"plot":None,"data":lsa_df,"content":None,"modelstr":None}
+	elif action=="runnca":
+		nca_df=mo.nca(actionparams["data"],actionparams["columnmap"])
+		return {"plot":None,"data":nca_df,"content":None,"modelstr":None}
+	elif action=="upload":
+		return {"plot":None,"data":actionparams["data"],"content":None,"modelstr":None}
 	else:
 		return {"plot":None,"data":None,"content":None,"modelstr":None}
 
 
 def parse_plot_command(input_str):
-    # Remove the 'plot ' prefix if it exists
-    content = input_str.strip().split("plot ")
+		# Remove the 'plot ' prefix if it exists
+		content = input_str.strip().split("plot ")
 
-    content=content[1]
+		content=content[1]
 	
-    # Regex to find: key= followed by either a list [...] or a quoted string '...'
-    # This ensures we capture the full content of lists and strings with spaces
-    pattern = r"(\w+)=([\[].*?[\]]|'.*?')"
-    matches = re.findall(pattern, content)    
+		# Regex to find: key= followed by either a list [...] or a quoted string '...'
+		# This ensures we capture the full content of lists and strings with spaces
+		pattern = r"(\w+)=([\[].*?[\]]|'.*?')"
+		matches = re.findall(pattern, content)    
 
-    # Use ast.literal_eval to safely convert string representations to Python objects
-    return {key: ast.literal_eval(val) for key, val in matches}
+		# Use ast.literal_eval to safely convert string representations to Python objects
+		return {key: ast.literal_eval(val) for key, val in matches}
 
 def parse_find_command(input_str):
 	# Strip the 'find ' prefix
@@ -167,28 +172,50 @@ def parse_text_content(input_str,action):
 	return {"text": content}
 
 def parse_lsa_command(input_str):
-    # Remove the command prefix 'runlsa '
-    content = input_str.split("runlsa ")
-    content=content[1]
+		# Remove the command prefix 'runlsa '
+		content = input_str.split("runlsa ")
+		content=content[1]
 
-    # Regex: captures key name, then either a bracketed list [...] or a non-space value
-    pattern = r'(\w+)=((?:\[.*?\])|(?:\S+))'
-    matches = re.findall(pattern, content)
+		# Regex: captures key name, then either a bracketed list [...] or a non-space value
+		pattern = r'(\w+)=((?:\[.*?\])|(?:\S+))'
+		matches = re.findall(pattern, content)
 
-    simparams_dict={"dose_species":None,"interval_days":None,"simtime_days":None,"dose_nmoles":None}
-    p_dict={"parameters":None,"lowvalues":None,"highvalues":None}
-    outputdict={"parameters":p_dict,"observable":None,"simparams":simparams_dict}
+		simparams_dict={"dose_species":None,"interval_days":None,"simtime_days":None,"dose_nmoles":None}
+		p_dict={"parameters":None,"lowvalues":None,"highvalues":None}
+		outputdict={"parameters":p_dict,"observable":None,"simparams":simparams_dict}
 
-    result = {}
-    for key, val in matches:
-      if key in ["parameters","lowvalues","highvalues"]:
-        outputdict["parameters"][key] = ast.literal_eval(val)
-      elif key in ["dose_species","interval_days","simtime_days","dose_nmoles"]:
-        outputdict["simparams"][key]=ast.literal_eval(val)
-      else:
-        outputdict[key] = ast.literal_eval(val)
+		result = {}
+		for key, val in matches:
+			if key in ["parameters","lowvalues","highvalues"]:
+				outputdict["parameters"][key] = ast.literal_eval(val)
+			elif key in ["dose_species","interval_days","simtime_days","dose_nmoles"]:
+				outputdict["simparams"][key]=ast.literal_eval(val)
+			else:
+				outputdict[key] = ast.literal_eval(val)
 
-    return outputdict
+		return outputdict
+
+def parse_nca_command(input_str):
+		# Matches key=value pairs, handling values with brackets or quotes
+		content = input_str.strip().split("runnca ")
+		content=content[1]
+		
+		pattern = r"(\w+)=([^ ]+)"
+		matches = re.findall(pattern, content)
+		
+		result = {}
+		for key, val in matches:
+				# ast.literal_eval safely converts '[1]' to [1] and "'str'" to "str"
+				parsed_val = ast.literal_eval(val)
+				
+				# If the value is a single-element list, extract the element
+				if isinstance(parsed_val, list) and len(parsed_val) == 1:
+						parsed_val = parsed_val[0]
+						
+				result[key] = parsed_val
+				
+		return result
+
 
 def parseuserinput(userinput:str,species_dict=None):
 	action=findaction(userinput)
@@ -207,6 +234,8 @@ def parseuserinput(userinput:str,species_dict=None):
 		actionparams=parse_plot_command(userinput)
 	elif action=="runlsa":
 		actionparams=parse_lsa_command(userinput)
+	elif action=="runnca":
+		actionparams=parse_nca_command(userinput)
 	elif action in ["section","note"]:
 		actionparams=parse_text_content(userinput,action)
 	else:
@@ -227,19 +256,20 @@ def find_metric(metric_name,df_full,t,species_dict):
 	# need what is timespecies,drugspecies, targetspecies, complexspecies
 	# when value at specific timepoint or until a timepoint is provided, truncate data
 	if t is not None:
-		print(df_full)
-		print(species_dict["timespecies"])
-		print(t)
-		print(df_full[species_dict["timespecies"]])
+		# print(df_full)
+		# print(species_dict["timespecies"])
+		# print(t)
+		# print(df_full[species_dict["timespecies"]])
 
 		df=df_full[df_full[species_dict["timespecies"]]<=t]
 	else:
 		df=df_full
+
 	if metric_name=="cmax":
 		#need drugspecies
 		return round(max(df[species_dict["drugspecies"]]),2)
 	elif metric_name=="auc":
-		return round(integrate.trapezoid(df["drugspecies"],df["timespecies"]),2)
+		return round(integrate.trapezoid(df[species_dict["drugspecies"]],df[species_dict["timespecies"]]),2)
 	elif metric_name=="ro":
 		return round(100*df.iloc[-1].at[species_dict["complexspecies"]]/(df.iloc[-1].at[species_dict["complexspecies"]] + df.iloc[-1].at[species_dict["targetspecies"]]),2)
 	else:

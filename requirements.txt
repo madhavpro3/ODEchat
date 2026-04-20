@@ -2,3 +2,4 @@ streamlit
 basico
 pandas
 matplotlib
+st-gsheets-connection
