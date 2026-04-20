@@ -43,6 +43,9 @@ if "curmodelstate" not in st.session_state:
 
 if "temp_parameters" not in st.session_state:
     st.session_state["temp_parameters"]={"chatmsg":None,"action":None,"actionparams":None}
+
+if "wftasks" not in st.session_state:
+    st.session_state["wftasks"]=[]
 # --------------------------
 
 # d[DPlasma]/dt=([DLymph]*L -[DPlasma]*0.33*L*0.05 - [DPlasma]*0.67*L*0.58 - CLp*[DPlasma])/Vp
@@ -462,7 +465,7 @@ def create_workflow_project():
             "plot simid=[1] xdata=['Time_days'] ydata=['ADC_ug_ml'] plotstyle=['-'] legend=['NHP PK'] title='NHP PK' xlabel='Time (days)' ylabel='Drug Concentration (ug/ml)' yscale='linear'",
             "plot simid=[2] xdata=['Time_days'] ydata=['ADC_nM'] plotstyle=['-'] legend=['Mouse PK'] title='Mouse PK' xlabel='Time (days)' ylabel='Drug Concentration (nM)' yscale='linear'",
             "plot simid=[3] xdata=['Time_days'] ydata=['TV_mm3'] plotstyle=['-'] legend=['Mouse TGI'] title='Mouse TGI' xlabel='Time (days)' ylabel='TV (mm3)' yscale='linear'",
-            "runnca dataid=[1] time='Time_days' concentration='ADC_ug_ml' dose='Dose_mpk'",
+            "runnca dataid=[1] time='Time_days' concentration='ADC_ug_ml' dose='Dose_mpk'",            
             "runnca dataid=[2] time='Time_days' concentration='ADC_nM' dose='Dose_mpk'",
             ]
 
@@ -518,6 +521,75 @@ def create_workflow_project():
 
         st.rerun()
 
+# def addtask(newtask):
+#     st.session_state["wftasks"].append(newtask)
+
+@st.dialog("Workflow",width="medium")
+def dialog_create_workflow():
+
+    # Ask for model equations
+    # Add tasks
+    # Display tasks with tags as needed
+    sampleeq="""d[Dc]/dt=-(CL/Vc)*[Dc] - (Q/Vc)*[Dc] + (Q/Vp)*[Dp]
+    d[Dp]/dt= (Q/Vc)*[Dc]-(Q/Vp)*[Dp]"""
+    st.text_area("Provide model equations",sampleeq)
+    st.markdown("**Note:**")
+    st.markdown("1. Equations should be written as d[species1]/dt = p1*[species1] - p2*[species2]...")
+    st.markdown("2. Separate equations with a new line")
+
+    task_options=["Simulate","Plot","Calibrate","Local Sensitivity Analysis","Non-compartmental Analysis","Find a metric","Upload file"]
+    # selectedtasks=st.multiselect("Task",options=task_options)
+
+    task_parameters={
+    "Simulate":"simulate dose_species=<> dose_nmoles=<> interval_days=<> simtime_days",
+    "Plot":"plot simid=[<>] xdata=['<>'] ydata=['<>'] legend=['<>'] plotstyle=['-'] axeslimits=[0, 180, 0, 5000] title='' xlabel='' ylabel='' yscale='linear'",
+    "Local Sensitivity Analysis":"runlsa parameters=['CL_D','Vc','Koff'] lowvalues=[0.1,1.805,0.1] highvalues=[0.4,7.22,10] observable='D_T_c' dose_species='Dc' dose_nmoles={RP2D_nmoles} simtime_days=21 interval_days=30",
+    "Non-compartmental Analysis":"runnca dataid=[1] time='Time_days' concentration='ADC_ug_ml' dose='Dose_mpk'"}
+
+    curdataid=-1
+    curmodelstate=0
+
+    list_sno,list_task,list_tagmodelstate,list_tagdataid=[1,2],["show controls","show model"],[0,0],[-1,-1]
+    cur_editor_df=pd.DataFrame({"Sno":list_sno,"Task Parameters":list_task,"Model State":list_tagmodelstate,"Data Id":list_tagdataid})
+
+    with st.form(key="form_wftasks"):
+        tasktype,addbtn=st.columns([0.7,0.3],vertical_alignment="bottom")
+        with tasktype:
+            newtask=st.selectbox("Task",options=task_options,label_visibility="collapsed")
+        with addbtn:
+            if st.form_submit_button("Add Task"):
+                st.session_state["wftasks"].append(newtask)
+
+    for taskinx,task in enumerate(st.session_state["wftasks"]):
+        list_sno.append(len(list_task)+1)
+        list_task.append(task_parameters[task])
+
+        if task in ["Simulate"]:
+            if curdataid==-1:
+                curdataid=1
+            else:
+                curdataid+=1
+
+        if task in ["Update Parameters"]:
+            curmodelstate+=1
+
+        list_tagmodelstate.append(curmodelstate)
+        list_tagdataid.append(curdataid)
+
+        cur_editor_df=pd.DataFrame({"Sno":list_sno,"Task Parameters":list_task,"Model State":list_tagmodelstate,"Data Id":list_tagdataid})
+
+    st.data_editor(cur_editor_df,disabled=["Sno","Model State","Data Id"],column_config={"Task Parameters":st.column_config.TextColumn()})
+
+    if st.button("Save Workflow"):
+        # Verify that equations are readable with species and parameters
+        # Verify that all task parameters are provided 
+
+        st.session_state["wftasks"]=[] # Initializing to empty
+        st.toast("WF created yaay!")
+
+
+
+
 #----------------------------- End of Dialogs ----------------------------------------
 
 
@@ -556,6 +628,14 @@ with projects_panel:
 
         create_workflow_project()
         st.toast("New workflow project created!")
+
+    if st.button("Create Workflow"):
+        # Ask for model equations
+        # Ask for tasks
+
+        dialog_create_workflow()
+
+        st.toast("Worflow Created!")
 
 
     for p in st.session_state["currentprojects"]:
@@ -964,42 +1044,3 @@ with chat_panel:
 
         else:
             updatemsgblock(st.session_state["chatdb"])
-
-
-
-
-                    #     msg={"id":3+taskinx,"userask":task,"action":action,"actionparams":actionparams,
-                    # "plotid":-1,"dataid":-1,"stateid":st.session_state["curmodelstate"],"contentid":-1}
-
-                    #     modelstr=st.session_state["statedb"][st.session_state["curmodelstate"]]
-                    #     actionresult=fo.takeaction(action,actionparams,modelstr)
-
-                    #     if actionresult["plot"] is not None:
-                    #         newid=len(st.session_state["plotdb"])+1 # new row number
-                    #         st.session_state["plotdb"].append({"id":newid,"properties":actionresult["plot"]})
-                    #         msg[f"plotid"]=newid
-
-                    #     if actionresult["data"] is not None:            
-                    #         newid=len(st.session_state["datadb"])+1 # new row number
-                    #         st.session_state["datadb"].append({"id":newid,"action":action,
-                    #             "data":actionresult["data"],"stateid":st.session_state["curmodelstate"],"alias":None})
-                    #         msg[f"dataid"]=newid
-
-                    #     if actionresult["content"] is not None:
-                    #         newid=len(st.session_state["contentdb"])+1 # new row number
-                    #         st.session_state["contentdb"].append({"id":newid,"content":actionresult["content"]})
-                    #         msg[f"contentid"]=newid
-
-                    #     if actionresult["modelstr"] is not None:
-                    #         # Add this to the model states and update the session model id
-                    #         st.session_state["statedb"].append(actionresult["modelstr"])
-
-                    #         # print("in index: returned model str table")
-                    #         # newmodelobj=model_io.import_sbml(actionresult["modelstr"])
-                    #         # newparam_table=model_info.get_parameters(model=newmodelobj).reset_index()
-                    #         # print(newparam_table)
-
-                    #         st.session_state["curmodelstate"]=len(st.session_state["statedb"])-1
-                    #         msg["stateid"]=st.session_state["curmodelstate"]
-
-                        # st.session_state["chatdb"].append(msg)
