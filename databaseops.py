@@ -1,59 +1,81 @@
 import pickle
 import os
+import streamlit as st
 
-DATABASE="ODEchat_db.pkl"
+# DATABASE="ODEchat_db.pkl"
 def getprojects():
-	if os.path.isfile(f"db\\{DATABASE}"):
-		with open(f"db\\{DATABASE}","rb") as file:
-			data=pickle.load(file)
-
-		projects=[]
+	data=st.session_state["sess_db"]
+	projects=[]
+	if data is not None:
 		for project in data:
 			projects.append({"name":project["name"],"id":project["id"]})
 
-		return projects
-	else:
-		with open(f"db\\{DATABASE}","wb") as file:
-			pickle.dump([],file)
+	return projects
 
-		return ""
+	# if os.path.isfile(f"db\\{DATABASE}"):
+	# 	with open(f"db\\{DATABASE}","rb") as file:
+	# 		data=pickle.load(file
+
+		# projects=[]
+		# for project in data:
+		# 	projects.append({"name":project["name"],"id":project["id"]})
+
+		# return projects
+	# else:
+	# 	with open(f"db\\{DATABASE}","wb") as file:
+	# 		pickle.dump([],file)
+
+	# 	return ""
 
 def saveproject(newname,newid,projectdata):
-	with open(f"db\\{DATABASE}","rb") as file:
-		projdata=pickle.load(file)
-
-	projdata.append({"name":newname,"id":newid,"chatdb":projectdata["chatdb"],"plotdb":projectdata["plotdb"],
+	st.session_state["sess_db"].append({"name":newname,"id":newid,"chatdb":projectdata["chatdb"],"plotdb":projectdata["plotdb"],
 		"datadb":projectdata["datadb"],"statedb":projectdata["statedb"],"contentdb":projectdata["contentdb"]})
 
-	with open(f"db\\{DATABASE}","wb") as file:
-		pickle.dump(projdata,file)
+	# with open(f"db\\{DATABASE}","rb") as file:
+	# 	projdata=pickle.load(file)
+
+	# projdata.append({"name":newname,"id":newid,"chatdb":projectdata["chatdb"],"plotdb":projectdata["plotdb"],
+	# 	"datadb":projectdata["datadb"],"statedb":projectdata["statedb"],"contentdb":projectdata["contentdb"]})
+
+	# with open(f"db\\{DATABASE}","wb") as file:
+	# 	pickle.dump(projdata,file)
 
 	return True
 
 def updateproject(sess_state):
-	with open(f"db\\{DATABASE}","rb") as file:
-		projdata=pickle.load(file)
+	projdata=st.session_state["sess_db"]
 
 	for proj in projdata:
 		if proj["id"]==sess_state["id"]:
 			for item in ["chatdb","plotdb","datadb","statedb","contentdb"]:
 				proj[item]=sess_state[item]
-
-	# print(projdata)
 	
-	with open(f"db\\{DATABASE}","wb") as file:
-		pickle.dump(projdata,file)
+	st.session_state["sess_db"]=projdata
+
+	# with open(f"db\\{DATABASE}","rb") as file:
+	# 	projdata=pickle.load(file)
+
+	# for proj in projdata:
+	# 	if proj["id"]==sess_state["id"]:
+	# 		for item in ["chatdb","plotdb","datadb","statedb","contentdb"]:
+	# 			proj[item]=sess_state[item]
+
+	# # print(projdata)
+	
+	# with open(f"db\\{DATABASE}","wb") as file:
+	# 	pickle.dump(projdata,file)
 
 	return True
 
 
 
 def loadproject(pid):
-	with open(f"db\\{DATABASE}", 'rb') as file:
-		data = pickle.load(file)
+	# with open(f"db\\{DATABASE}", 'rb') as file:
+	# 	data = pickle.load(file)
 
 	# print(data)
 	# print(f"PID={pid}")
+	data=st.session_state["sess_db"]
 
 	for project in data:
 		if project["id"]==pid:

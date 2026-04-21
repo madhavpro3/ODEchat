@@ -2,7 +2,7 @@
 # Like - parsing user input to call the right tools and parameters
 import databaseops as do
 import modelops as mo
-from basico import model_io,model_info
+# from basico import model_io,model_info
 import re
 from scipy import integrate
 import ast

@@ -1,6 +1,7 @@
 # Model operations: Simulate, calibrate, find metrics, LSA 
 
 from basico import model_io,model_info,task_timecourse
+from basico import *
 import pandas as pd
 import math
 import frontendops as fo
@@ -14,11 +15,12 @@ def parseequations(eqs:str,projectname:str,repassignments:dict=None):
 
 	model_species=model_info.get_species().index.tolist()
 
-	for repa,expr in repassignments.items():
-		if repa in model_species:
-			model_info.set_species(repa,type="assignment",expression=expr)
-		else:
-			model_info.add_species(repa,type="assignment",expression=expr)
+	if repassignments is not None:
+		for repa,expr in repassignments.items():
+			if repa in model_species:
+				model_info.set_species(repa,type="assignment",expression=expr)
+			else:
+				model_info.add_species(repa,type="assignment",expression=expr)
 
 	# Setting all inital_concentration to 0
 	for s in model_species:
