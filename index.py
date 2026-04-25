@@ -418,6 +418,7 @@ def create_workflow_project():
 	# Molecule exploration: Molecule type mAb/Bispec/ADC, Benchmark, Target location
 	# ADC Dose translation: Upload NHP PK, Upload Mouse-PK, Upload Mouse-TGI
 	if wftype=="PK/PD Visualization":
+		resetsession()
 		NHPPK_file=st.file_uploader("PK")
 		st.text("Ensure the file is in .csv form with columns 'Time_days', 'Concentration_nM', 'Dose_mg'. At the moment only single dose calibration is supported. Mention different groups by 'Group' column.")
 
@@ -473,6 +474,7 @@ def create_workflow_project():
 		tasks=st.text_area(label="Tasks",value=workflow_editable,height="content")
 
 	elif wftype=="Parameter exploration":
+		resetsession()
 		# Select benchmark
 		# Show model equations (uneditable)
 		# Show workflow and Parameters - Parameter values for benchmark are updated when changed selection
