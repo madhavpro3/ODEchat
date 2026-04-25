@@ -5,7 +5,7 @@ from basico import *
 import pandas as pd
 import math
 import frontendops as fo
-import copy
+# import copy
 
 def parseequations(eqs:str,projectname:str,repassignments:dict=None):
 	model_io.new_model(name=projectname)
@@ -158,7 +158,8 @@ def nca(df,columnmap):
 
 
 def calibrate(modelstr:str,calibparameters:dict):
-	userdata=copy.deepcopy(calibparameters["data"])
+	# userdata=copy.deepcopy(calibparameters["data"])
+	userdata=calibparameters["data"].copy(deep=True)
 	timecol=calibparameters["time"]
 	concentrationcol=calibparameters["independent"]
 	dosecol=calibparameters["dose"]
