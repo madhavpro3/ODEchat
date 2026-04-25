@@ -8,14 +8,14 @@ from scipy import integrate
 import ast
 
 # def loadproject(pid):
-# 	# get the chat history, database for this project
-# 	# return this
+#   # get the chat history, database for this project
+#   # return this
 	
-# 	return do.loadproject(pid)
+#   return do.loadproject(pid)
 
 # def parseequations(equations:str):
-# 	modelobj=mo.parseequations(equations,"proj name")
-# 	return modelobj
+#   modelobj=mo.parseequations(equations,"proj name")
+#   return modelobj
 
 ROUTES={"showcontrols":[["view","show","list","controls","control"],"list controls: lists all the controls"],
 	"showmodel":[["view","show","list","model"],"show model: show details of the current model"],
@@ -28,7 +28,8 @@ ROUTES={"showcontrols":[["view","show","list","controls","control"],"list contro
 	"runlsa":[["run","lsa","runlsa"],"Run Local Sensitivity Analysis"],
 	"runnca":[["run","nca","runnca"],"Run Non Compartmental Analysis"],
 	"note":[["note","notes","note:","notes:","assumption","assuming","assume"],"note (text): add analysis notes"],
-	"section":[["section"],"section: section header"]
+	"section":[["section"],"section: section header"],
+	"calibrate":[["calibrate"],"calibrate: Run parameter estimation by calibrating the model to data"]
 }
 
 def createproject(name,curprojects):
@@ -53,11 +54,11 @@ def extract_int(input:str) -> int:
 	return int(match.group())
 
 # def updateproject(sess_state):
-# 	# read the database
-# 	# update the project data
-# 	# update the database
-# 	# print(sess_state)
-# 	do.updateproject(sess_state)
+#   # read the database
+#   # update the project data
+#   # update the database
+#   # print(sess_state)
+#   do.updateproject(sess_state)
 
 def findaction(userinput: str):
 	user_input_split=userinput.lower().split(" ")
@@ -125,6 +126,9 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 		return {"plot":None,"data":nca_df,"content":None,"modelstr":None}
 	elif action=="upload":
 		return {"plot":None,"data":actionparams["data"],"content":None,"modelstr":None}
+	elif action=="calibrate":
+		estparams=mo.calibrate(modelstr,actionparams)
+		return {"plot":None,"data":estparams,"content":None,"modelstr":None}
 	else:
 		return {"plot":None,"data":None,"content":None,"modelstr":None}
 
@@ -165,6 +169,49 @@ def parse_find_command(input_str):
 		result[key] = ast.literal_eval(val)
 		
 	return result
+
+def parse_calibrate_command(input_str):
+	# Regex grabs key=value, allowing values to contain brackets [...]
+	content = input_str.split("calibrate ")
+	content=content[1]
+	pattern = r'(\w+)=((?:\[[^\]]*\])|(?:[^\s]+))'
+	matches = re.findall(pattern, content)
+	
+	result = {}
+	for key, value in matches:
+			# Handle lists and tuples
+			if value.startswith('[') and value.endswith(']'):
+					try:
+							# Safely evaluate literal Python structures (like bounds)
+							result[key] = ast.literal_eval(value)
+					except (ValueError, SyntaxError):
+							# Fallback for unquoted string lists like [V1,V2,CL,Q]
+							inner = value[1:-1]
+							result[key] = [x.strip() for x in inner.split(',')]
+			else:
+					# Handle numbers and plain strings
+					try:
+							if '.' in value or 'e' in value.lower():
+									result[key] = float(value)
+							else:
+									result[key] = int(value)
+					except ValueError:
+							result[key] = value
+							
+	return result
+
+	# # content='dataid=1 time=Time_days concentration=concentration_nM dose=Dose_mpk'
+	# pattern = r'(\w+)=((?:\[.*?\])|(?:\S+))'
+	# matches = re.findall(pattern, content)
+
+	# outputdict={}
+	# for key, val in matches:
+	#     if key=='dataid':
+	#         outputdict[key] = int(val)
+	#     else:
+	#         outputdict[key] = val
+	# return outputdict
+
 
 def parse_text_content(input_str,action):
 	content=input_str.split(f"{action}:")
@@ -238,6 +285,8 @@ def parseuserinput(userinput:str,species_dict=None):
 		actionparams=parse_nca_command(userinput)
 	elif action in ["section","note"]:
 		actionparams=parse_text_content(userinput,action)
+	elif action=="calibrate":
+		actionparams=parse_calibrate_command(userinput)
 	else:
 		actionparams={}
 		for w in userwords:

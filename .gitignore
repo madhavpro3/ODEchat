@@ -1,2 +1,8 @@
 googleaccount/
 .streamlit/secrets.toml
+.dockerignore
+Dockerfile
+README.Docker.md
+compose.yaml
+__pycache__/*
+*.txt

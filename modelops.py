@@ -1,6 +1,6 @@
 # Model operations: Simulate, calibrate, find metrics, LSA 
 
-from basico import model_io,model_info,task_timecourse
+from basico import model_io,model_info,task_timecourse,task_parameterestimation
 from basico import *
 import pandas as pd
 import math
@@ -29,6 +29,16 @@ def parseequations(eqs:str,projectname:str,repassignments:dict=None):
 	# model_io.load_model('brusselator.cps')
 	return model_io.get_current_model()
 
+def verifyequations(eqs:str):
+	model_io.new_model(name=projectname)
+	indvequations=eqs.split("\n")
+
+	for indveq in indvequations:
+		model_info.add_equation(eqn=indveq)
+
+	model_species=model_info.get_species().index.tolist()
+
+
 def simulate(modelstr:str,simparams:dict):
 	# Create model from modelstr (sbml)
 	# add dose to the dose species, param set will be the right one
@@ -41,7 +51,6 @@ def simulate(modelstr:str,simparams:dict):
 	# print("paramtable at simulation")
 	# param_table=model_info.get_parameters(model=modelobj).reset_index()
 	# print(param_table[['name','unit','initial_value']])
-
 
 	simtime=simparams["simtime_days"]
 	doseinterval=simparams["interval_days"]
@@ -57,7 +66,7 @@ def simulate(modelstr:str,simparams:dict):
 			entiresimulation=cursimulation
 		else:
 			cursimulation.Time=cursimulation.Time+(cycle*doseinterval) + 5/(24*60) # adding 5min = 5/1440 days
-			entiresimulation=pd.concat([entiresimulation,cursimulation])
+			entiresimulation=pd.concat([entiresimulation,cursimulation],ignore_index=True)
 
 	if partialcycletime>0:
 		curdosespeciesval=model_info.get_species(model=modelobj)['initial_concentration'].get(simparams["dose_species"])+simparams["dose_nmoles"]
@@ -66,8 +75,8 @@ def simulate(modelstr:str,simparams:dict):
 		if entiresimulation.empty:
 			entiresimulation=cursimulation
 		else:
-			cursimulation.Time=cursimulation.Time+(cycle*doseinterval)
-			entiresimulation=pd.concat([entiresimulation,cursimulation])
+			cursimulation.Time=cursimulation.Time+((cycle+1)*doseinterval)
+			entiresimulation=pd.concat([entiresimulation,cursimulation],ignore_index=True)
 
 	return entiresimulation
 	# model_info.set_species(simparams["dose_species"],model=modelobj,initial_concentration=simparams["dose_nmoles"])
@@ -144,4 +153,52 @@ def nca(df,columnmap):
 		aucs.append(fo.find_metric("auc",curdf,None,{"timespecies":timecol,"drugspecies":conccol}))
 
 	return pd.DataFrame({"Dose":doses,"Cmax":cmaxes,"AUC":aucs})
+
+
+def calibrate(modelstr:str,calibparameters:dict):
+	userdata=calibparameters["data"]
+	timecol=calibparameters["time"]
+	concentrationcol=calibparameters["concentration"]
+	dosecol=calibparameters["dose"]
+
+	print(calibparameters)
+
+	userdata[concentrationcol]=userdata[concentrationcol]/userdata[dosecol] # normalizing with dose to run pooled fit
+	# userdata[concentrationcol]=userdata[concentrationcol]*0.087
+	# print(userdata)
+	userdata=userdata.rename(columns={concentrationcol:'[Drugcc_nM]'})
+	# userdata=userdata.rename(columns={concentrationcol:'[Drugca]'})
+
+	modelobj=model_io.import_sbml(modelstr)
+
+	# print(model_info.get_species(model=modelobj))
+	model_info.set_parameters("V1",initial_value=0.087,value=0.087)
+	model_info.set_parameters("V2",initial_value=0.1233,value=0.087)
+	model_info.set_parameters("CL",initial_value=0.042,value=0.087)
+	model_info.set_parameters("Q",initial_value=0.045,value=0.087)
+	# print(model_info.get_parameters(model=modelobj))
+
+	# initial amount = 20 is coming as follows, 1mpk, Cyno Wt=3Kg => 3mg. Drug MW=150KDa. 3mg = 20nmoles
+	model_info.set_species("Drugca",initial_concentration=20,concentration=20,model=modelobj)
+	model_info.set_species("Drugpa",initial_concentration=0,concentration=0,model=modelobj)
+	model_info.add_species("Drugcc_nM",type='assignment',model=modelobj,expression="[Drugca]/Values[V1].InitialValue")
+	# model_info.set_model_unit(quantity_unit='nmol',model=modelobj)
+
+	fit_items = [
+	            {'name': 'Values[V1].InitialValue', 'lower': 0.001, 'upper': 1,'start':0.01},
+	            {'name': 'Values[V2].InitialValue', 'lower': 0.001, 'upper': 1,'start':0.01},
+	            {'name': 'Values[CL].InitialValue', 'lower': 0.001, 'upper': 1,'start':0.01},
+	            {'name': 'Values[Q].InitialValue', 'lower': 0.001, 'upper':1,'start':0.01},
+	        ]
+	# V1=0.087, V2=0.1233,CL=0.042,CLD=0.045
+	task_parameterestimation.set_fit_parameters(fit_items,model=modelobj)
+
+	task_parameterestimation.add_experiment('exp1', userdata[[timecol,'[Drugcc_nM]']],model=modelobj)
+	# print(task_parameterestimation.get_experiment_mapping('exp1'))
+
+	# print(task_timecourse.run_time_course(15,model=modelobj))
+
+	estparams=task_parameterestimation.run_parameter_estimation(update_model=True,model=modelobj,method='Evolution Strategy (SRES)')
+	return estparams
+
 

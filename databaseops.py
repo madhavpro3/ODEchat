@@ -4,7 +4,7 @@ import streamlit as st
 
 # DATABASE="ODEchat_db.pkl"
 def getprojects():
-	data=st.session_state["sess_db"]
+	data=st.session_state["sess_db"]["projects"]
 	projects=[]
 	if data is not None:
 		for project in data:
@@ -28,7 +28,7 @@ def getprojects():
 	# 	return ""
 
 def saveproject(newname,newid,projectdata):
-	st.session_state["sess_db"].append({"name":newname,"id":newid,"chatdb":projectdata["chatdb"],"plotdb":projectdata["plotdb"],
+	st.session_state["sess_db"]["projects"].append({"name":newname,"id":newid,"chatdb":projectdata["chatdb"],"plotdb":projectdata["plotdb"],
 		"datadb":projectdata["datadb"],"statedb":projectdata["statedb"],"contentdb":projectdata["contentdb"]})
 
 	# with open(f"db\\{DATABASE}","rb") as file:
@@ -43,14 +43,14 @@ def saveproject(newname,newid,projectdata):
 	return True
 
 def updateproject(sess_state):
-	projdata=st.session_state["sess_db"]
+	projdata=st.session_state["sess_db"]["projects"]
 
 	for proj in projdata:
 		if proj["id"]==sess_state["id"]:
 			for item in ["chatdb","plotdb","datadb","statedb","contentdb"]:
 				proj[item]=sess_state[item]
 	
-	st.session_state["sess_db"]=projdata
+	st.session_state["sess_db"]["projects"]=projdata
 
 	# with open(f"db\\{DATABASE}","rb") as file:
 	# 	projdata=pickle.load(file)
@@ -75,7 +75,7 @@ def loadproject(pid):
 
 	# print(data)
 	# print(f"PID={pid}")
-	data=st.session_state["sess_db"]
+	data=st.session_state["sess_db"]["projects"]
 
 	for project in data:
 		if project["id"]==pid:
