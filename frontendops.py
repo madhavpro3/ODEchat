@@ -127,8 +127,10 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 	elif action=="upload":
 		return {"plot":None,"data":actionparams["data"],"content":None,"modelstr":None}
 	elif action=="calibrate":
-		estparams=mo.calibrate(modelstr,actionparams)
-		return {"plot":None,"data":estparams,"content":None,"modelstr":None}
+		estparams,update_actionparams=mo.calibrate(modelstr,actionparams)
+		print(update_actionparams)
+		newmodelstr,newparamtable=mo.update(modelstr,update_actionparams)
+		return {"plot":None,"data":estparams,"content":None,"modelstr":newmodelstr}
 	else:
 		return {"plot":None,"data":None,"content":None,"modelstr":None}
 

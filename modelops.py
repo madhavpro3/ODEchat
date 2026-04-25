@@ -5,6 +5,7 @@ from basico import *
 import pandas as pd
 import math
 import frontendops as fo
+import copy
 
 def parseequations(eqs:str,projectname:str,repassignments:dict=None):
 	model_io.new_model(name=projectname)
@@ -94,6 +95,7 @@ def update(oldmodelstr,actionparams):
 	# convert the model to sbml string
 	# return the sbml and new parametertable
 
+	# actionparams=[{"name":<>,"new_value":<>},...]
 	newmodelobj=model_io.import_sbml(oldmodelstr)
 	for paramupdate in actionparams:
 		model_info.set_parameters(paramupdate["name"],model=newmodelobj,initial_value=paramupdate["new_value"])
@@ -156,49 +158,71 @@ def nca(df,columnmap):
 
 
 def calibrate(modelstr:str,calibparameters:dict):
-	userdata=calibparameters["data"]
+	userdata=copy.deepcopy(calibparameters["data"])
 	timecol=calibparameters["time"]
-	concentrationcol=calibparameters["concentration"]
+	concentrationcol=calibparameters["independent"]
 	dosecol=calibparameters["dose"]
 
 	print(calibparameters)
 
 	userdata[concentrationcol]=userdata[concentrationcol]/userdata[dosecol] # normalizing with dose to run pooled fit
-	# userdata[concentrationcol]=userdata[concentrationcol]*0.087
-	# print(userdata)
-	userdata=userdata.rename(columns={concentrationcol:'[Drugcc_nM]'})
+
+	datacol=f'[{calibparameters["objective"]}]'
+	userdata=userdata.rename(columns={concentrationcol:datacol})
+	# userdata=userdata.rename(columns={concentrationcol:'[Drugcc_nM]'})
 	# userdata=userdata.rename(columns={concentrationcol:'[Drugca]'})
 
 	modelobj=model_io.import_sbml(modelstr)
 
 	# print(model_info.get_species(model=modelobj))
-	model_info.set_parameters("V1",initial_value=0.087,value=0.087)
-	model_info.set_parameters("V2",initial_value=0.1233,value=0.087)
-	model_info.set_parameters("CL",initial_value=0.042,value=0.087)
-	model_info.set_parameters("Q",initial_value=0.045,value=0.087)
+	# model_info.set_parameters("V1",initial_value=0.087,value=0.087)
+	# model_info.set_parameters("V2",initial_value=0.1233,value=0.087)
+	# model_info.set_parameters("CL",initial_value=0.042,value=0.087)
+	# model_info.set_parameters("Q",initial_value=0.045,value=0.087)
 	# print(model_info.get_parameters(model=modelobj))
 
-	# initial amount = 20 is coming as follows, 1mpk, Cyno Wt=3Kg => 3mg. Drug MW=150KDa. 3mg = 20nmoles
-	model_info.set_species("Drugca",initial_concentration=20,concentration=20,model=modelobj)
+	# initial amount = 20 is coming as follows, 1mg, Drug MW=150KDa. 1mg = 6.67nmoles
+	DrugWT=150 # KDa
+	dose_nmoles=1*1000/DrugWT
+	model_info.set_species("Drugca",initial_concentration=dose_nmoles,concentration=dose_nmoles,model=modelobj)
 	model_info.set_species("Drugpa",initial_concentration=0,concentration=0,model=modelobj)
-	model_info.add_species("Drugcc_nM",type='assignment',model=modelobj,expression="[Drugca]/Values[V1].InitialValue")
+	# model_info.add_species("Drugcc",type='assignment',model=modelobj,expression="[Drugca]/Values[V1].InitialValue")
 	# model_info.set_model_unit(quantity_unit='nmol',model=modelobj)
 
-	fit_items = [
-	            {'name': 'Values[V1].InitialValue', 'lower': 0.001, 'upper': 1,'start':0.01},
-	            {'name': 'Values[V2].InitialValue', 'lower': 0.001, 'upper': 1,'start':0.01},
-	            {'name': 'Values[CL].InitialValue', 'lower': 0.001, 'upper': 1,'start':0.01},
-	            {'name': 'Values[Q].InitialValue', 'lower': 0.001, 'upper':1,'start':0.01},
-	        ]
+	fit_items=[]
+	for paraminx,param in enumerate(calibparameters["parameters"]):
+		fit_items.append({"name":f"Values[{param}].InitialValue","lower":calibparameters["bounds"][paraminx][0],
+			"upper":calibparameters["bounds"][paraminx][1]})
+
+	# fit_items = [
+	#             {'name': 'Values[V1].InitialValue', 'lower': 0.001, 'upper': 1,'start':0.01},
+	#             {'name': 'Values[V2].InitialValue', 'lower': 0.001, 'upper': 1,'start':0.01},
+	#             {'name': 'Values[CL].InitialValue', 'lower': 0.001, 'upper': 1,'start':0.01},
+	#             {'name': 'Values[Q].InitialValue', 'lower': 0.001, 'upper':1,'start':0.01},
+	#         ]
 	# V1=0.087, V2=0.1233,CL=0.042,CLD=0.045
 	task_parameterestimation.set_fit_parameters(fit_items,model=modelobj)
 
-	task_parameterestimation.add_experiment('exp1', userdata[[timecol,'[Drugcc_nM]']],model=modelobj)
+	task_parameterestimation.add_experiment('exp1', userdata[[timecol,datacol]],model=modelobj)
 	# print(task_parameterestimation.get_experiment_mapping('exp1'))
 
 	# print(task_timecourse.run_time_course(15,model=modelobj))
 
-	estparams=task_parameterestimation.run_parameter_estimation(update_model=True,model=modelobj,method='Evolution Strategy (SRES)')
-	return estparams
+	estparams=task_parameterestimation.run_parameter_estimation(update_model=True,model=modelobj,
+		method='Evolution Strategy (SRES)',randomize_start_values=True)
+	estparams=estparams.reset_index()
+	estparams=estparams[['name','sol']]
+	estparams=estparams.rename(columns={"sol":"estimate"})
+
+	update_actionparams=[]
+	for row in estparams.itertuples():
+		update_actionparams.append({"name":row.name,"new_value":row.estimate})
+	# update_actionparams=estparams.to_dict(orient='list')
+	# update_actionparams['new_value']=update_actionparams.pop('estimate')
+	# update_actionparams['name']=calibparameters["parameters"]
+
+	# update_actionparams={"name":estparams["name"],"new_value":estparams["estimate"]}
+	# actionparams=[{"name":<>,"new_value":<>},...]
+	return estparams,update_actionparams
 
 
