@@ -29,7 +29,8 @@ ROUTES={"showcontrols":[["view","show","list","controls","control"],"list contro
 	"runnca":[["run","nca","runnca"],"Run Non Compartmental Analysis"],
 	"note":[["note","notes","note:","notes:","assumption","assuming","assume"],"note (text): add analysis notes"],
 	"section":[["section"],"section: section header"],
-	"calibrate":[["calibrate"],"calibrate: Run parameter estimation by calibrating the model to data"]
+	"calibrate":[["calibrate"],"calibrate: Run parameter estimation by calibrating the model to data"],
+	"scale":[["scale"],"scale parameters=['<>'] method='' factors=[<>]: Scales model parameters using the factors"]
 }
 
 def createproject(name,curprojects):
@@ -128,9 +129,11 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 		return {"plot":None,"data":actionparams["data"],"content":None,"modelstr":None}
 	elif action=="calibrate":
 		estparams,update_actionparams=mo.calibrate(modelstr,actionparams)
-		print(update_actionparams)
 		newmodelstr,newparamtable=mo.update(modelstr,update_actionparams)
 		return {"plot":None,"data":estparams,"content":None,"modelstr":newmodelstr}
+	elif action=="scale":
+		newmodelstr,newparamtable=mo.scaleparameters(modelstr,actionparams)
+		return {"plot":None,"data":newparamtable,"content":None,"modelstr":newmodelstr}
 	else:
 		return {"plot":None,"data":None,"content":None,"modelstr":None}
 
@@ -148,6 +151,36 @@ def parse_plot_command(input_str):
 
 		# Use ast.literal_eval to safely convert string representations to Python objects
 		return {key: ast.literal_eval(val) for key, val in matches}
+
+def parse_scale_command(input_str):
+	# Regex grabs key=value, allowing values to contain brackets [...]
+	content = input_str.split("scale ")
+	content=content[1]
+	pattern = r'(\w+)=((?:\[[^\]]*\])|(?:[^\s]+))'
+	matches = re.findall(pattern, content)
+	
+	result = {}
+	for key, value in matches:
+			# Handle lists and tuples
+			if value.startswith('[') and value.endswith(']'):
+					try:
+							# Safely evaluate literal Python structures (like bounds)
+							result[key] = ast.literal_eval(value)
+					except (ValueError, SyntaxError):
+							# Fallback for unquoted string lists like [V1,V2,CL,Q]
+							inner = value[1:-1]
+							result[key] = [x.strip() for x in inner.split(',')]
+			else:
+					# Handle numbers and plain strings
+					try:
+							if '.' in value or 'e' in value.lower():
+									result[key] = float(value)
+							else:
+									result[key] = int(value)
+					except ValueError:
+							result[key] = value
+							
+	return result
 
 def parse_find_command(input_str):
 	# Strip the 'find ' prefix
@@ -279,8 +312,10 @@ def parseuserinput(userinput:str,species_dict=None):
 				actionparams.append({"name":actionparam,"new_value":float(value)})
 	elif action=="find":
 		actionparams=parse_find_command(userinput)
-	elif action=="plot":
+	elif action in "plot":
 		actionparams=parse_plot_command(userinput)
+	elif action=="scale":
+		actionparams=parse_scale_command(userinput)
 	elif action=="runlsa":
 		actionparams=parse_lsa_command(userinput)
 	elif action=="runnca":
@@ -291,6 +326,7 @@ def parseuserinput(userinput:str,species_dict=None):
 		actionparams=parse_calibrate_command(userinput)
 	else:
 		actionparams={}
+		print(userwords)
 		for w in userwords:
 			if len(w.split("="))==2:
 				actionparam,value=w.split("=")

@@ -459,10 +459,16 @@ def create_workflow_project():
 		f"simulate dose_species=Drugca dose_nmoles=60 interval_days=14 simtime_days=14",
 		f"simulate dose_species=Drugca dose_nmoles=200 interval_days=14 simtime_days=14",
 		"plot dataid=[4,5,6,1] xdata=['Time','Time','Time','Time'] ydata=['Drugcc','Drugcc','Drugcc','Concentration_nM'] plotstyle=['-','-','-','-'] legend=['3mg','9mg','30mg','Data'] title='PK' xlabel='Time' ylabel='Drug Concentration' yscale='linear' axeslimits=[0,14,0,2500]",
-		# "section: Translation to Human",
-		# "scale parameters=[V1,V2,CL,Q] method=allometry factors=[1,1,0.8,0.8]",
-		# "note: Scaling V1,V2 parameters with a factor of 1 and CL,Q with a factor of 0.8",
+		"section: Translation to Human",
+		"scale parameters=['V1','V2','CL','Q'] method=allometry factors=[1,1,0.8,0.8] currentanimalwt=3 targetanimalwt=70",
+		# "section: Scaling V1,V2 parameters with a factor of 1 and CL,Q with a factor of 0.8. Running human PK prediction at 1,5,10,20 mpk doses",
+		"simulate dose_species=Drugca dose_nmoles=466.67 interval_days=14 simtime_days=180",
+		"simulate dose_species=Drugca dose_nmoles=2333.33 interval_days=14 simtime_days=180",
+		"simulate dose_species=Drugca dose_nmoles=4666.67 interval_days=14 simtime_days=180",
+		"simulate dose_species=Drugca dose_nmoles=9333.34 interval_days=14 simtime_days=180",
+		"plot dataid=[8,9,10,11] xdata=['Time','Time','Time','Time'] ydata=['Drugcc','Drugcc','Drugcc','Drugcc'] plotstyle=['-','-','-','-'] legend=['1mpk','5mpk','10mpk','20mpk'] title='Human PK' xlabel='Time (days)' ylabel='Plasma concentration (nM)' yscale='linear' axeslimits=[0,180,0,1e04]",
 		]
+		# 1mpk=70mg 1mole=150Kg, 70mg = 70/150 umole = 7000/15 nmole =  
 
 		# In Calibrate, change the model state
 		# Simualte the model with est parameters and compare with data
@@ -564,6 +570,7 @@ def create_workflow_project():
 		tasks_list=tasks.split("\n")
 		for taskinx,task in enumerate(tasks_list):
 			action,actionparams=fo.parseuserinput(task)
+			print(task)
 			print(action)
 			print(actionparams)
 

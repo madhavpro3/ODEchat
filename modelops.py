@@ -89,7 +89,7 @@ def get_parameters(modelstr:str):
 	return param_table[['name','unit','initial_value']]
 
 
-def update(oldmodelstr,actionparams):
+def update(oldmodelstr:str,actionparams:dict):
 	# Create model with the oldmodelstr
 	# Update parameters of the model, get the new parameter table
 	# convert the model to sbml string
@@ -106,6 +106,21 @@ def update(oldmodelstr,actionparams):
 	newmodelstr=model_io.save_model_to_string(model=newmodelobj)
 
 	return newmodelstr,newparam_table
+
+def scaleparameters(oldmodelstr:str,actionparams:dict):
+	outputparamdict={"parameters":actionparams["parameters"],"oldvalues":[],"newvalues":[]}
+	modelobj=model_io.import_sbml(oldmodelstr)
+	for pinx,p in enumerate(actionparams["parameters"]):
+		oldvalue=model_info.get_parameters(p).initial_value.values[0]
+		newvalue=round(oldvalue*((actionparams["targetanimalwt"]/actionparams["currentanimalwt"])**actionparams["factors"][pinx]),2)
+		outputparamdict["oldvalues"].append(oldvalue)
+		outputparamdict["newvalues"].append(newvalue)
+		model_info.set_parameters(p,model=modelobj,initial_value=newvalue)
+
+	newmodelstr=model_io.save_model_to_string(model=modelobj)
+
+	return newmodelstr,outputparamdict
+
 
 
 def lsa(modelstr:str,parameters:dict,obsspecies:str,simparams:dict):
