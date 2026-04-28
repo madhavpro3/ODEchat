@@ -413,15 +413,21 @@ def plot_dialog():
 
 @st.dialog("Workflow",width="large")
 def create_workflow_project():
-	wftype=st.selectbox("Type",options=["Parameter exploration","PK/PD Visualization"],on_change=resetsession)
+	wftype=st.selectbox("Type",options=["Parameter exploration","NHP to Human dose translation"],on_change=resetsession)
 
 	# Workflow options
 	# Molecule exploration: Molecule type mAb/Bispec/ADC, Benchmark, Target location
 	# ADC Dose translation: Upload NHP PK, Upload Mouse-PK, Upload Mouse-TGI
-	if wftype=="PK/PD Visualization":
+	if wftype=="NHP to Human dose translation":
 		resetsession()
+		st.session_state["name"]=wftype
 		NHPPK_file=st.file_uploader("PK")
 		st.text("Ensure the file is in .csv form with columns 'Time_days', 'Concentration_nM', 'Dose_mg'. At the moment only single dose calibration is supported. Mention different groups by 'Group' column.")
+
+		if st.button("Load sample data",type="primary"):
+			NHPPK_file_default="referencemolecules\\Cyno_PK_demo.csv"
+			df_NHPPK=pd.read_csv(NHPPK_file_default)
+			st.dataframe(df_NHPPK)
 
 		# ADCPKPDeq="""d[Drugca]/dt = -(CL/V1)*[Drugca] - (Q/V1)*[Drugca] + (Q/V2)*[Drugpa] \nd[Drugpa]/dt = (Q/V1)*[Drugca] - (Q/V2)*[Drugpa] \nd[TV1]/dt = (kgex*(1-(([TV1]+[TV2]+[TV3]+[TV4])/vmax))/((1 + (kgex*([TV1]+[TV2]+[TV3]+[TV4])/kg)^psi)^(1/psi)) - Kmax*([Drugca]*0.459/V1)/(KC50 + ([Drugca]*0.459/V1)))*[TV1] \nd[TV2]/dt = (Kmax*([Drugca]*0.459/V1)/(KC50 + ([Drugca]*0.459/V1)))*[TV1] - ([TV2]/tau) \nd[TV3]/dt = ([TV2]-[TV3])/tau \nd[TV4]/dt = ([TV3]-[TV4])/tau"""
 		ADCPKPDeq="""d[Drugca]/dt = -(CL/V1)*[Drugca] - (Q/V1)*[Drugca] + (Q/V2)*[Drugpa] \nd[Drugpa]/dt = (Q/V1)*[Drugca] - (Q/V2)*[Drugpa]"""
@@ -432,23 +438,6 @@ def create_workflow_project():
 
 		curprojects=st.session_state["currentprojects"]
 		modelobj=mo.parseequations(ADCPKPDeq,f"proj {len(curprojects)+1}",repeatedassignments)
-
-		# species_mm3=["TV1","TV2","TV3","TV4"]
-		# species_nmoles=["ADCca","ADCpa"]
-		# for s_nmoles in species_nmoles:
-		# 	model_info.set_species(s_nmoles,model=modelobj,initial_concentration=0,unit="nanomoles")
-		# for s_mm3 in species_mm3:
-		# 	model_info.set_species(s_mm3,model=modelobj,initial_concentration=0,unit="mm3")
-
-		# loc_species,loc_params=st.columns(2)
-		# model_species=model_info.get_species().reset_index()
-		# model_parameters=model_info.get_parameters().reset_index()
-
-		# with loc_species:
-		# 	st.data_editor(model_species[["name","unit","initial_concentration"]])
-
-		# with loc_params:
-		# 	st.data_editor(model_parameters[['name','unit','initial_value']])	
 
 		workflow=[
 		"section: Data Visualization",
@@ -482,6 +471,7 @@ def create_workflow_project():
 
 	elif wftype=="Parameter exploration":
 		resetsession()
+		st.session_state["name"]=wftype
 		# Select benchmark
 		# Show model equations (uneditable)
 		# Show workflow and Parameters - Parameter values for benchmark are updated when changed selection
@@ -559,9 +549,14 @@ def create_workflow_project():
 	progressbar=st.empty()
 
 	if st.button("Create",type="primary"):
-		if wftype=="PK/PD Visualization":
-			df_NHPPK = pd.read_csv(NHPPK_file)
-			runaction_updatedb(1,f"upload {NHPPK_file}","upload",{"data":df_NHPPK})
+		if wftype=="NHP to Human dose translation":
+			# df_NHPPK = pd.read_csv(NHPPK_file)
+			if NHPPK_file is None:
+				df_NHPPK=pd.read_csv("referencemolecules\\Cyno_PK_demo.csv")
+				runaction_updatedb(1,f"upload Cyno_PK_demo.csv","upload",{"data":df_NHPPK})
+			else:
+				df_NHPPK=pd.read_csv(NHPPK_file)
+				runaction_updatedb(1,f"upload {NHPPK_file}","upload",{"data":df_NHPPK})
 
 		modelstr=model_io.save_model_to_string(model=modelobj)
 		st.session_state["statedb"].append(modelstr)
@@ -720,7 +715,7 @@ st.set_page_config(layout='wide')
 # User details panel
 user_greet,user_logout,emp=st.columns([0.2,0.2,0.6])
 with user_greet:
-	st.write("Hi, User")
+	st.text("Hi, User")
 # with user_logout:
 # 	st.button("Logout")
 
@@ -779,9 +774,11 @@ with chat_panel:
 	# Model interactions
 
 	if len(st.session_state["name"])==0:
-		st.markdown("Welcome to ODEchat. Please select either a 'Blank Project' or a 'Workflow Project' to continue.")
+		st.subheader("Welcome to ODEchat!")
+		st.markdown("Please select either a 'Blank Project' or a 'Workflow Project' to continue.")
 	else:
 		st.markdown(f"Current project = {st.session_state["name"]}")
+
 	msgblock=st.container(height=500,border=False)
 
 	if len(st.session_state["statedb"])>0: # Session has a model state
