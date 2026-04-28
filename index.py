@@ -91,7 +91,8 @@ def updatemsgblock(chatmsg):
 			# Note: Assuming that rownumber and id are exactly same.
 			if msg["contentid"]>-1:
 				cont=st.session_state["contentdb"][msg["contentid"]-1]["content"]
-				st.html(cont)
+				# st.html(cont)
+				st.text(cont)
 
 			if msg["dataid"]>-1:
 				df=st.session_state["datadb"][msg["dataid"]-1]["data"]
@@ -570,9 +571,6 @@ def create_workflow_project():
 		tasks_list=tasks.split("\n")
 		for taskinx,task in enumerate(tasks_list):
 			action,actionparams=fo.parseuserinput(task)
-			print(task)
-			print(action)
-			print(actionparams)
 
 			# if wftype=="PK/PD Visualization":
 			# 	df_new_allgroups=pd.DataFrame()
@@ -590,9 +588,9 @@ def create_workflow_project():
 			msg=runaction_updatedb(3+taskinx,task,action,actionparams)
 			st.session_state["chatdb"].append(msg)
 
-			# if taskinx%3==0:
-			# 	progress_percent=math.floor(100*(taskinx+1)/len(tasks_list))
-			# 	progressbar.progress(progress_percent,text=f"Progress: {progress_percent}%")
+			if taskinx%3==0:
+				progress_percent=math.floor(100*(taskinx+1)/len(tasks_list))
+				progressbar.progress(progress_percent,text=f"Progress: {progress_percent}%")
 
 		st.rerun()
 
@@ -609,8 +607,8 @@ def dialog_create_workflow():
 	d[Dp]/dt= (Q/Vc)*[Dc]-(Q/Vp)*[Dp]"""
 	st.text_area("Provide model equations",sampleeq)
 	st.markdown("**Note:**")
-	st.markdown("1. Equations should be written as d[species1]/dt = p1*[species1] - p2*[species2]...")
-	st.markdown("2. Separate equations with a new line")
+	st.text("1. Equations should be written as d[species1]/dt = p1*[species1] - p2*[species2]...\n2. Separate equations with a new line")
+	# st.text("2. Separate equations with a new line")
 
 	task_options=["Simulate","Plot","Calibrate","Local Sensitivity Analysis","Non-compartmental Analysis","Find a metric","Upload file"]
 	# selectedtasks=st.multiselect("Task",options=task_options)
@@ -670,8 +668,9 @@ def dialog_addequations():
 	with st.form("form_eq"):
 		st.text_area("Provide model equations",sampleeq,key="text_modelequations")
 		st.markdown("**Note:**")
-		st.markdown("1. Equations should be written as d[species1]/dt = p1*[species1] - p2*[species2]...")
-		st.markdown("2. Separate equations with a new line")
+		st.text("1. Equations should be written as d[species1]/dt = p1*[species1] - p2*[species2]...\n2. Separate equations with a new line")
+		# st.markdown("1. Equations should be written as d[species1]/dt = p1*[species1] - p2*[species2]...")
+		# st.markdown("2. Separate equations with a new line")
 		# st.button("Verify",on_click=show_species_params_tables)
 
 		# model_tables=st.empty()
@@ -690,16 +689,24 @@ def dialog_addequations():
 		speciestable_col,paramtable_col=st.columns(2)
 
 		with speciestable_col:
-			st.dataframe(model_species[["name","unit","initial_concentration"]])
+			speciesvals=st.data_editor(model_species[["name","unit","initial_concentration"]],disabled=["name"])
 
 		with paramtable_col:
-			st.dataframe(model_parameters[['name','unit','initial_value']])
+			paramvals=st.data_editor(model_parameters[['name','unit','initial_value']],disabled=["name"])
 
 		if st.button("Confirm"):
-			st.toast("Model created")
-			# TBD: Save the model obj in the session state, but only write to strings while saving to db?
-			st.session_state["statedb"].append(model_io.save_model_to_string(model=modelobj))
+			updatedmodelobj=mo.set_initialvalues(modelobj,speciesvals,paramvals)
+
+
+			st.session_state["statedb"].append(model_io.save_model_to_string(model=updatedmodelobj))
 			st.session_state["curmodelstate"]=len(st.session_state["statedb"])-1
+
+			deftasks=["show controls","show model"]
+			for taskinx,task in enumerate(deftasks):
+				action,actionparams=fo.parseuserinput(task)
+				msg=runaction_updatedb(1+taskinx,task,action,actionparams)
+				st.session_state["chatdb"].append(msg)
+
 			st.rerun()
 
 #----------------------------- End of Dialogs ----------------------------------------
@@ -735,10 +742,10 @@ with projects_panel:
 		if st.button("Create Workflow",type="primary",width="stretch"):
 			st.toast("Coming Soon!")
 
-	st.write("Current Projects")
-	with st.container(height=200,border=True):
+	st.markdown("**Current Projects**")
+	with st.container(height=200,border=False):
 		# for pinx,p in enumerate(st.session_state["currentprojects"]):
-		if st.button("Project 1",type="tertiary"):
+		if st.button("Blank Project",type="secondary"):
 			res=fo.loadproject(1)
 			for item in ["name","id","chatdb","plotdb","datadb","statedb","contentdb"]:
 				st.session_state[item]=res[item]
@@ -749,7 +756,7 @@ with projects_panel:
 			st.session_state["verify_eq_btnstate"]=False
 			dialog_addequations()
 
-		if st.button("Workflows",type="tertiary"):
+		if st.button("Workflows",type="secondary"):
 			create_workflow_project()
 			# st.toast("Selected WF")
 
@@ -775,7 +782,7 @@ with chat_panel:
 		st.markdown("Please select a project to continue")
 	else:
 		st.markdown(f"Current project = {st.session_state["name"]}")
-	msgblock=st.container(height=500,border=True)
+	msgblock=st.container(height=500,border=False)
 
 	if len(st.session_state["statedb"])>0: # Session has a model state
 		if userask:=st.chat_input(disabled=False,key="chatbox"):

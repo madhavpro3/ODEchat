@@ -85,18 +85,24 @@ def findaction(userinput: str):
 
 def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a dict or list(dict)
 	if action=='showcontrols':
-		htmlstr="<ul>"
+		# htmlstr="<ul>"
+		# for key,val in ROUTES.items():
+		# 	htmlstr+=f"<li>{val[1]}</li>"
+		# 	htmlstr+="</ul>"
+
+		txtstr=""
+		inx=0
 		for key,val in ROUTES.items():
-			htmlstr+=f"<li>{val[1]}</li>"
-			htmlstr+="</ul>"
-		return {"plot":None,"data":None,"content":htmlstr,"modelstr":None}
+			inx+=1
+			txtstr+=f"{inx}.{val[1]}\n"
+		return {"plot":None,"data":None,"content":txtstr,"modelstr":None}
 	elif action=="simulate":
 		simresult=mo.simulate(modelstr,actionparams)
 		return {"plot":None,"data":simresult,"content":None,"modelstr":None}
 	elif action=="showmodel":
 		# show current model parameters
-		paramtable=mo.get_parameters(modelstr)
-		return {"plot":None,"data":paramtable,"content":None,"modelstr":None}
+		paramtable,modelnotes=mo.get_parameters(modelstr)
+		return {"plot":None,"data":paramtable,"content":modelnotes,"modelstr":None}
 	elif action=="update":
 		newmodelstr,newparamtable=mo.update(modelstr,actionparams)
 		return {"plot":None,"data":newparamtable,"content":None,"modelstr":newmodelstr}
@@ -104,8 +110,8 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 		return {"plot":actionparams,"data":None,"content":None,"modelstr":None}
 	elif action=="showstate":
 		modelstr=actionparams["modelstr"]
-		paramtable=mo.get_parameters(modelstr)
-		return {"plot":None,"data":paramtable,"content":None,"modelstr":None}
+		paramtable,modelnotes=mo.get_parameters(modelstr)
+		return {"plot":None,"data":paramtable,"content":modelnotes,"modelstr":None}
 	elif action in ["note","section"]:
 		return {"plot":None,"data":None,"content":actionparams["text"],"modelstr":None}
 	elif action=="find":

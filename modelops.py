@@ -11,6 +11,7 @@ def parseequations(eqs:str,projectname:str,repassignments:dict=None):
 	model_io.new_model(name=projectname)
 	indvequations=eqs.split("\n")
 
+
 	for indveq in indvequations:
 		model_info.add_equation(eqn=indveq)
 
@@ -27,6 +28,7 @@ def parseequations(eqs:str,projectname:str,repassignments:dict=None):
 	for s in model_species:
 		model_info.set_species(initial_concentration=0)
 
+	model_info.set_notes(eqs)
 	# model_io.load_model('brusselator.cps')
 	return model_io.get_current_model()
 
@@ -39,6 +41,14 @@ def verifyequations(eqs:str):
 
 	model_species=model_info.get_species().index.tolist()
 
+def set_initialvalues(modelobj,speciesvals,paramvals):
+	for row in speciesvals.itertuples():
+		model_info.set_species(row.name,initial_concentration=row.initial_concentration,unit=row.unit,model=modelobj)
+
+	for row in paramvals.itertuples():
+		model_info.set_parameters(row.name,initial_value=row.initial_value,unit=row.unit,model=modelobj)
+
+	return modelobj
 
 def simulate(modelstr:str,simparams:dict):
 	# Create model from modelstr (sbml)
@@ -86,8 +96,7 @@ def simulate(modelstr:str,simparams:dict):
 def get_parameters(modelstr:str):
 	modelobj=model_io.import_sbml(modelstr)
 	param_table=model_info.get_parameters(model=modelobj).reset_index()
-	return param_table[['name','unit','initial_value']]
-
+	return param_table[['name','unit','initial_value']],model_info.get_notes()
 
 def update(oldmodelstr:str,actionparams:dict):
 	# Create model with the oldmodelstr
