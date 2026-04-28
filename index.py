@@ -425,7 +425,7 @@ def create_workflow_project():
 		st.text("Ensure the file is in .csv form with columns 'Time_days', 'Concentration_nM', 'Dose_mg'. At the moment only single dose calibration is supported. Mention different groups by 'Group' column.")
 
 		if st.button("Load sample data",type="primary"):
-			NHPPK_file_default="referencemolecules\\Cyno_PK_demo.csv"
+			NHPPK_file_default="referencemolecules/Cyno_PK_demo.csv"
 			df_NHPPK=pd.read_csv(NHPPK_file_default)
 			st.dataframe(df_NHPPK)
 
@@ -552,7 +552,7 @@ def create_workflow_project():
 		if wftype=="NHP to Human dose translation":
 			# df_NHPPK = pd.read_csv(NHPPK_file)
 			if NHPPK_file is None:
-				df_NHPPK=pd.read_csv("referencemolecules\\Cyno_PK_demo.csv")
+				df_NHPPK=pd.read_csv("referencemolecules/Cyno_PK_demo.csv")
 				runaction_updatedb(1,f"upload Cyno_PK_demo.csv","upload",{"data":df_NHPPK})
 			else:
 				df_NHPPK=pd.read_csv(NHPPK_file)
