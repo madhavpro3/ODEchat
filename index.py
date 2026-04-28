@@ -735,17 +735,17 @@ with projects_panel:
 
 	btnloc_createproject,btnloc_createwf=st.columns(2)
 	with btnloc_createproject:
-		if st.button("Create Project",type="primary",width="stretch"):
+		if st.button("Create Project",type="secondary",width="stretch"):
 			st.toast("Coming soon!")
 
 	with btnloc_createwf:
-		if st.button("Create Workflow",type="primary",width="stretch"):
+		if st.button("Create Workflow",type="secondary",width="stretch"):
 			st.toast("Coming Soon!")
 
 	st.markdown("**Current Projects**")
 	with st.container(height=200,border=False):
 		# for pinx,p in enumerate(st.session_state["currentprojects"]):
-		if st.button("Blank Project",type="secondary"):
+		if st.button("Blank Project",type="primary",width="stretch"):
 			res=fo.loadproject(1)
 			for item in ["name","id","chatdb","plotdb","datadb","statedb","contentdb"]:
 				st.session_state[item]=res[item]
@@ -756,7 +756,7 @@ with projects_panel:
 			st.session_state["verify_eq_btnstate"]=False
 			dialog_addequations()
 
-		if st.button("Workflows",type="secondary"):
+		if st.button("Workflow Project",type="primary",width="stretch"):
 			create_workflow_project()
 			# st.toast("Selected WF")
 
@@ -779,7 +779,7 @@ with chat_panel:
 	# Model interactions
 
 	if len(st.session_state["name"])==0:
-		st.markdown("Please select a project to continue")
+		st.markdown("Welcome to ODEchat. Please select either a 'Blank Project' or a 'Workflow Project' to continue.")
 	else:
 		st.markdown(f"Current project = {st.session_state["name"]}")
 	msgblock=st.container(height=500,border=False)

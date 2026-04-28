@@ -33,6 +33,12 @@ ROUTES={"showcontrols":[["view","show","list","controls","control"],"list contro
 	"scale":[["scale"],"scale parameters=['<>'] method='' factors=[<>]: Scales model parameters using the factors"]
 }
 
+# TASKPARAMETERS={"showstate":["statenum":int],
+# "simulate":["dose_species":str,"dose_nmoles":float,"interval_days":float,"simtime_days":float],
+# "plot":["dataid":list,"xdata":list,"ydata":list,"legend":list,"plotstyle":list,"axeslimits":list,"title":str,"xlabel":str,"ylabel":str,"yscale":str],
+# "runlsa":["parameters":list,"lowvalues":list,"highvalues":list,"observable":str,"dose_species":str,"dose_nmoles":float,"simtime_days":float,"interval_days":float]
+# }
+
 def createproject(name,curprojects):
 	newpid=len(curprojects)+1
 	return do.saveproject(name,newpid,{"chatdb":[],"plotdb":[],"datadb":[],"statedb":[],"contentdb":[]})
@@ -146,7 +152,8 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 
 def parse_plot_command(input_str):
 		# Remove the 'plot ' prefix if it exists
-		content = input_str.strip().split("plot ")
+		task="plot"
+		content = input_str.strip().split(f"{task} ")
 
 		content=content[1]
 	
