@@ -96,7 +96,14 @@ def simulate(modelstr:str,simparams:dict):
 def get_parameters(modelstr:str):
 	modelobj=model_io.import_sbml(modelstr)
 	param_table=model_info.get_parameters(model=modelobj).reset_index()
-	return param_table[['name','unit','initial_value']],model_info.get_notes()
+	# if get_notes:
+	# 	return param_table[['name','unit','initial_value']],model_info.get_notes()
+	# else:
+	return param_table[['name','unit','initial_value']]
+
+def get_notes(modelstr:str):
+	modelobj=model_io.import_sbml(modelstr)
+	return model_info.get_notes()
 
 def update(oldmodelstr:str,actionparams:dict):
 	# Create model with the oldmodelstr

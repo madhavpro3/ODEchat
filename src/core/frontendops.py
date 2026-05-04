@@ -107,7 +107,8 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 		return {"plot":None,"data":simresult,"content":None,"modelstr":None}
 	elif action=="showmodel":
 		# show current model parameters
-		paramtable,modelnotes=mo.get_parameters(modelstr)
+		paramtable=mo.get_parameters(modelstr)
+		modelnotes=mo.get_notes(modelstr)
 		return {"plot":None,"data":paramtable,"content":modelnotes,"modelstr":None}
 	elif action=="update":
 		newmodelstr,newparamtable=mo.update(modelstr,actionparams)
@@ -116,7 +117,8 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 		return {"plot":actionparams,"data":None,"content":None,"modelstr":None}
 	elif action=="showstate":
 		modelstr=actionparams["modelstr"]
-		paramtable,modelnotes=mo.get_parameters(modelstr)
+		paramtable=mo.get_parameters(modelstr)
+		modelnotes=mo.get_notes(modelstr)
 		return {"plot":None,"data":paramtable,"content":modelnotes,"modelstr":None}
 	elif action in ["note","section"]:
 		return {"plot":None,"data":None,"content":actionparams["text"],"modelstr":None}

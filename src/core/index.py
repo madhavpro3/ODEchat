@@ -247,6 +247,7 @@ def updateparameters_dialog():
 	# Get model parameters and their current values
 	# Show the values in a data editor
 	modeldf=mo.get_parameters(st.session_state["statedb"][st.session_state["curmodelstate"]]) # Cols = 'name','unit','initial_value'
+	# print(modeldf)
 	modeldf["new_value"]=modeldf["initial_value"]
 	paramtable=st.data_editor(modeldf,disabled=["name","initial_value","unit"])
 
