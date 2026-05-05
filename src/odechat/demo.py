@@ -102,7 +102,7 @@ def updatemsgblock(chatmsg):
 				plotproperties=st.session_state["plotdb"][msg["plotid"]-1]["properties"]
 
 				allplotdata=[]
-				if msg["action"]=="runlsa":
+				if msg["action"]=="lsa":
 					curdataid=plotproperties["dataid"][0]
 					curplotdata=pd.DataFrame({"xdata":[],"ydata_high":[],"ydata_low":[]})
 					curplotdata["xdata"]=st.session_state["datadb"][curdataid-1]["data"][plotproperties["xdata"][0]]
@@ -167,7 +167,7 @@ def runaction_updatedb(idnum,task,action,actionparams):
 	if action=="find":
 		actionparams["df"]=st.session_state["datadb"][actionparams["dataid"]-1]["data"]
 
-	if action=="runnca":
+	if action=="nca":
 		actionparams["data"]=st.session_state["datadb"][actionparams["dataid"]-1]["data"]
 		actionparams["columnmap"]={"time":actionparams["time"],"concentration":actionparams["concentration"],
 		"dose":actionparams["dose"]}
@@ -177,7 +177,7 @@ def runaction_updatedb(idnum,task,action,actionparams):
 
 	actionresult=fo.takeaction(action,actionparams,modelstr)
 
-	if action=="runlsa":
+	if action=="lsa":
 		lsaplot={"dataid":[len(st.session_state["datadb"])+1],"xdata":['parameters'],"ydata":['sens_lowval','sens_highval'],
 		"axeslimits":[0, 0, 0, 100],"plotstyle":['b'],"legend":['high'],
 		"title":"LSA","xlabel":"%RO","ylabel":"Parameter","yscale":"linear"}
@@ -426,8 +426,13 @@ def create_workflow_project():
 		st.text("Ensure the file is in .csv form with columns 'Time_days', 'Concentration_nM', 'Dose_mg'. At the moment only single dose calibration is supported. Mention different groups by 'Group' column.")
 
 		if st.button("Load sample data",type="primary"):
-			NHPPK_file_default="referencemolecules/Cyno_PK_demo.csv"
-			df_NHPPK=pd.read_csv(NHPPK_file_default)
+			df_NHPPK=pd.DataFrame({
+					'Group': [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3],
+					 'Dose_mg': [3,3,3,3,3,3,3,9,9,9,9,9,9,9,30,30,30,30,30,30,30],
+					 'Time': [0.0, 0.3, 0.9, 2.9, 3.9, 6.8, 14.1, 0.1, 0.5, 0.9, 2.9, 4.1, 6.9, 14.0, 0.2, 0.4, 0.9, 2.9, 4.0, 7.1, 14.0],
+					 'ADCcc_ugml': [42.2, 27.7, 15.6, 5.9, 4.7, 2.1, 0.6, 87.7, 57.7, 42.1, 18.2, 15.5, 6.2, 1.8, 360.3, 249.7, 164.2, 69.0, 50.3, 37.5, 11.7],
+					 'Concentration_nM': [275.7, 181.3, 101.8, 38.5, 30.4, 13.8, 4.0, 573.4, 377.0, 275.2, 118.7, 101.3, 40.3, 11.6, 2355.0, 1632.2, 1073.0, 450.9, 328.7, 245.2, 76.6]
+					 })
 			st.dataframe(df_NHPPK)
 
 		# ADCPKPDeq="""d[Drugca]/dt = -(CL/V1)*[Drugca] - (Q/V1)*[Drugca] + (Q/V2)*[Drugpa] \nd[Drugpa]/dt = (Q/V1)*[Drugca] - (Q/V2)*[Drugpa] \nd[TV1]/dt = (kgex*(1-(([TV1]+[TV2]+[TV3]+[TV4])/vmax))/((1 + (kgex*([TV1]+[TV2]+[TV3]+[TV4])/kg)^psi)^(1/psi)) - Kmax*([Drugca]*0.459/V1)/(KC50 + ([Drugca]*0.459/V1)))*[TV1] \nd[TV2]/dt = (Kmax*([Drugca]*0.459/V1)/(KC50 + ([Drugca]*0.459/V1)))*[TV1] - ([TV2]/tau) \nd[TV3]/dt = ([TV2]-[TV3])/tau \nd[TV4]/dt = ([TV3]-[TV4])/tau"""
@@ -443,7 +448,7 @@ def create_workflow_project():
 		workflow=[
 		"section: Data Visualization",
 		"plot dataid=[1] xdata=['Time'] ydata=['Concentration_nM'] plotstyle=['-'] legend=['PK'] title='PK' xlabel='Time' ylabel='Drug Concentration' yscale='linear'",
-		"runnca dataid=[1] time='Time' concentration='Concentration_nM' dose='Dose_mg'",
+		"nca dataid=[1] time='Time' concentration='Concentration_nM' dose='Dose_mg'",
 		"note: Assuming the MW=150KDa",
 		f"calibrate dataid=1 time=Time independent=Concentration_nM dose=Dose_mg objective=Drugcc parameters=[V1,V2,CL,Q] bounds=[(1e-3,1),(1e-3,1),(1e-3,1),(1e-3,1)]",
 		f"simulate dose_species=Drugca dose_nmoles=20 interval_days=14 simtime_days=14",
@@ -532,7 +537,7 @@ def create_workflow_project():
 		"section: Analysis of Novel molecule",
 		f"simulate dose_species=Dc dose_nmoles=10 interval_days=21 simtime_days=360",
 		"find ro t=21 dataid=2 time='Time' drug='Dc' target='Tc' complex='D_T_c'",
-		f"runlsa parameters=['CL_D','Vc','Koff'] lowvalues=[0.1,1.805,0.1] highvalues=[0.4,7.22,10] observable='D_T_c' dose_species='Dc' dose_nmoles=10 simtime_days=21 interval_days=30",
+		f"lsa parameters=['CL_D','Vc','Koff'] lowvalues=[0.1,1.805,0.1] highvalues=[0.4,7.22,10] observable='D_T_c' dose_species='Dc' dose_nmoles=10 simtime_days=21 interval_days=30",
 		"section: Analysis of benchmark molecule",
 		f"update Vc={bm_Vc} Vp={bm_Vp} Q_D={bm_Q} CL_D={bm_CL} Kon={bm_Kon} Koff={bm_Koff}",
 		f"note: {benchmark} parameters are taken from {bm_ref}",
@@ -553,7 +558,13 @@ def create_workflow_project():
 		if wftype=="NHP to Human dose translation":
 			# df_NHPPK = pd.read_csv(NHPPK_file)
 			if NHPPK_file is None:
-				df_NHPPK=pd.read_csv("referencemolecules/Cyno_PK_demo.csv")
+				df_NHPPK=pd.DataFrame({
+						'Group': [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3],
+						 'Dose_mg': [3,3,3,3,3,3,3,9,9,9,9,9,9,9,30,30,30,30,30,30,30],
+						 'Time': [0.0, 0.3, 0.9, 2.9, 3.9, 6.8, 14.1, 0.1, 0.5, 0.9, 2.9, 4.1, 6.9, 14.0, 0.2, 0.4, 0.9, 2.9, 4.0, 7.1, 14.0],
+						 'ADCcc_ugml': [42.2, 27.7, 15.6, 5.9, 4.7, 2.1, 0.6, 87.7, 57.7, 42.1, 18.2, 15.5, 6.2, 1.8, 360.3, 249.7, 164.2, 69.0, 50.3, 37.5, 11.7],
+						 'Concentration_nM': [275.7, 181.3, 101.8, 38.5, 30.4, 13.8, 4.0, 573.4, 377.0, 275.2, 118.7, 101.3, 40.3, 11.6, 2355.0, 1632.2, 1073.0, 450.9, 328.7, 245.2, 76.6]
+						 })
 				runaction_updatedb(1,f"upload Cyno_PK_demo.csv","upload",{"data":df_NHPPK})
 			else:
 				df_NHPPK=pd.read_csv(NHPPK_file)
@@ -612,8 +623,8 @@ def dialog_create_workflow():
 	task_parameters={
 	"Simulate":"simulate dose_species='<speciesname>' dose_nmoles=10 interval_days=21 simtime_days=21",
 	"Plot":"plot dataid=[<>] xdata=['<>'] ydata=['<>'] legend=['<>'] plotstyle=['-'] axeslimits=[0, 21, 0, 100] title='' xlabel='' ylabel='' yscale='linear'",
-	"Local Sensitivity Analysis":"runlsa parameters=['<parameter1>','<parameter2>'] lowvalues=[0,0] highvalues=[1,1] observable='<speciesname>' dose_species='<speciesname>' dose_nmoles=<dosevalue> simtime_days=21 interval_days=21",
-	"Non-compartmental Analysis":"runnca dataid=[1] time='<Time column>' concentration='<concentration column>' dose='<dose column>'"}
+	"Local Sensitivity Analysis":"lsa parameters=['<parameter1>','<parameter2>'] lowvalues=[0,0] highvalues=[1,1] observable='<speciesname>' dose_species='<speciesname>' dose_nmoles=<dosevalue> simtime_days=21 interval_days=21",
+	"Non-compartmental Analysis":"nca dataid=[1] time='<Time column>' concentration='<concentration column>' dose='<dose column>'"}
 
 	curdataid=-1
 	curmodelstate=0

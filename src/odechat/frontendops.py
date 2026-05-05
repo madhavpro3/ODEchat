@@ -25,8 +25,8 @@ ROUTES={"showcontrols":[["view","show","list","controls","control"],"list contro
 	"find":[["find","calculate","what","auc","cmax","rolast"],"find (metric): finds the value of given metric. Current metrics are Cmax, AUC, ROlast"],
 	"showstate":[["show","state","view"],"show model state (number): show the details of the selected model state"],
 	"selectstate":[["select","state","choose"],"select model state (number): selects the model state"],
-	"runlsa":[["run","lsa","runlsa"],"Run Local Sensitivity Analysis"],
-	"runnca":[["run","nca","runnca"],"Run Non Compartmental Analysis"],
+	"lsa":[["lsa"],"Run Local Sensitivity Analysis"],
+	"nca":[["nca"],"Run Non Compartmental Analysis"],
 	"note":[["note","notes","note:","notes:","assumption","assuming","assume"],"note (text): add analysis notes"],
 	"section":[["section"],"section: section header"],
 	"calibrate":[["calibrate"],"calibrate: Run parameter estimation by calibrating the model to data"],
@@ -133,10 +133,10 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 		elif actionparams["metric"]=="auc":
 			ans+="nM-day"
 		return {"plot":None,"data":None,"content":ans,"modelstr":None}
-	elif action=="runlsa":
+	elif action=="lsa":
 		lsa_df=mo.lsa(modelstr,actionparams["parameters"],actionparams["observable"],actionparams["simparams"])
 		return {"plot":None,"data":lsa_df,"content":None,"modelstr":None}
-	elif action=="runnca":
+	elif action=="nca":
 		nca_df=mo.nca(actionparams["data"],actionparams["columnmap"])
 		return {"plot":None,"data":nca_df,"content":None,"modelstr":None}
 	elif action=="upload":
@@ -270,7 +270,7 @@ def parse_text_content(input_str,action):
 
 def parse_lsa_command(input_str):
 		# Remove the command prefix 'runlsa '
-		content = input_str.split("runlsa ")
+		content = input_str.split("lsa ")
 		content=content[1]
 
 		# Regex: captures key name, then either a bracketed list [...] or a non-space value
@@ -294,7 +294,7 @@ def parse_lsa_command(input_str):
 
 def parse_nca_command(input_str):
 		# Matches key=value pairs, handling values with brackets or quotes
-		content = input_str.strip().split("runnca ")
+		content = input_str.strip().split("nca ")
 		content=content[1]
 		
 		pattern = r"(\w+)=([^ ]+)"
@@ -331,9 +331,9 @@ def parseuserinput(userinput:str,species_dict=None):
 		actionparams=parse_plot_command(userinput)
 	elif action=="scale":
 		actionparams=parse_scale_command(userinput)
-	elif action=="runlsa":
+	elif action=="lsa":
 		actionparams=parse_lsa_command(userinput)
-	elif action=="runnca":
+	elif action=="nca":
 		actionparams=parse_nca_command(userinput)
 	elif action in ["section","note"]:
 		actionparams=parse_text_content(userinput,action)
