@@ -91,11 +91,6 @@ def findaction(userinput: str):
 
 def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a dict or list(dict)
 	if action=='showcontrols':
-		# htmlstr="<ul>"
-		# for key,val in ROUTES.items():
-		# 	htmlstr+=f"<li>{val[1]}</li>"
-		# 	htmlstr+="</ul>"
-
 		txtstr=""
 		inx=0
 		for key,val in ROUTES.items():
@@ -111,9 +106,13 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 		modelnotes=mo.get_notes(modelstr)
 		return {"plot":None,"data":paramtable,"content":modelnotes,"modelstr":None}
 	elif action=="update":
-		newmodelstr,newparamtable=mo.update(modelstr,actionparams)
-		return {"plot":None,"data":newparamtable,"content":None,"modelstr":newmodelstr}
+		if len(actionparams)==0:
+			return {"plot":None,"data":None,"content":None,"modelstr":None}
+		else:
+			newmodelstr,newparamtable=mo.update(modelstr,actionparams)
+			return {"plot":None,"data":newparamtable,"content":None,"modelstr":newmodelstr}
 	elif action=="plot":
+		print(f"in fo takeaction{actionparams}")
 		return {"plot":actionparams,"data":None,"content":None,"modelstr":None}
 	elif action=="showstate":
 		modelstr=actionparams["modelstr"]
@@ -152,52 +151,58 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 		return {"plot":None,"data":None,"content":None,"modelstr":None}
 
 
-def parse_plot_command(input_str):
-		# Remove the 'plot ' prefix if it exists
-		task="plot"
-		content = input_str.strip().split(f"{task} ")
+def parse_plot_command(input_str,outputtemplate):
+	# Remove the 'plot ' prefix if it exists
+	task="plot"
+	content = input_str.strip("plot")
+	content=content.strip()
 
-		content=content[1]
-	
-		# Regex to find: key= followed by either a list [...] or a quoted string '...'
-		# This ensures we capture the full content of lists and strings with spaces
-		pattern = r"(\w+)=([\[].*?[\]]|'.*?')"
-		matches = re.findall(pattern, content)    
+	# content=content[1]
 
-		# Use ast.literal_eval to safely convert string representations to Python objects
-		return {key: ast.literal_eval(val) for key, val in matches}
+	# Regex to find: key= followed by either a list [...] or a quoted string '...'
+	# This ensures we capture the full content of lists and strings with spaces
+	pattern = r"(\w+)=([\[].*?[\]]|'.*?')"
+	matches = re.findall(pattern, content)    
 
-def parse_scale_command(input_str):
+	# Use ast.literal_eval to safely convert string representations to Python objects
+	# return {key: ast.literal_eval(val) for key, val in matches}
+	outputdict=outputtemplate
+	for key,val in matches:
+		outputdict[key]=ast.literal_eval(val)
+
+	return outputdict
+
+def parse_scale_command(input_str,outputtemplate):
 	# Regex grabs key=value, allowing values to contain brackets [...]
 	content = input_str.split("scale ")
 	content=content[1]
 	pattern = r'(\w+)=((?:\[[^\]]*\])|(?:[^\s]+))'
 	matches = re.findall(pattern, content)
 	
-	result = {}
+	result = outputtemplate
 	for key, value in matches:
-			# Handle lists and tuples
-			if value.startswith('[') and value.endswith(']'):
-					try:
-							# Safely evaluate literal Python structures (like bounds)
-							result[key] = ast.literal_eval(value)
-					except (ValueError, SyntaxError):
-							# Fallback for unquoted string lists like [V1,V2,CL,Q]
-							inner = value[1:-1]
-							result[key] = [x.strip() for x in inner.split(',')]
-			else:
-					# Handle numbers and plain strings
-					try:
-							if '.' in value or 'e' in value.lower():
-									result[key] = float(value)
-							else:
-									result[key] = int(value)
-					except ValueError:
-							result[key] = value
+		# Handle lists and tuples
+		if value.startswith('[') and value.endswith(']'):
+			try:
+				# Safely evaluate literal Python structures (like bounds)
+				result[key] = ast.literal_eval(value)
+			except (ValueError, SyntaxError):
+				# Fallback for unquoted string lists like [V1,V2,CL,Q]
+				inner = value[1:-1]
+				result[key] = [x.strip() for x in inner.split(',')]
+		else:
+			# Handle numbers and plain strings
+			try:
+				if '.' in value or 'e' in value.lower():
+					result[key] = float(value)
+				else:
+					result[key] = int(value)
+			except ValueError:
+				result[key] = value
 							
 	return result
 
-def parse_find_command(input_str):
+def parse_find_command(input_str,outputtemplate):
 	# Strip the 'find ' prefix
 	content = input_str.strip().split("find ")
 	content=content[1]
@@ -212,41 +217,42 @@ def parse_find_command(input_str):
 	matches = re.findall(pattern, kv_section)
 	
 	# Initialize dict with the metric
-	result = {"metric": metric}
+	outputdict=outputtemplate
+	outputdict["metric"]=metric
 	
 	# Parse each match
 	for key, val in matches:
-		result[key] = ast.literal_eval(val)
+		outputdict[key] = ast.literal_eval(val)
 		
-	return result
+	return outputdict
 
-def parse_calibrate_command(input_str):
+def parse_calibrate_command(input_str,outputtemplate):
 	# Regex grabs key=value, allowing values to contain brackets [...]
 	content = input_str.split("calibrate ")
 	content=content[1]
 	pattern = r'(\w+)=((?:\[[^\]]*\])|(?:[^\s]+))'
 	matches = re.findall(pattern, content)
 	
-	result = {}
+	result = outputtemplate
 	for key, value in matches:
-			# Handle lists and tuples
-			if value.startswith('[') and value.endswith(']'):
-					try:
-							# Safely evaluate literal Python structures (like bounds)
-							result[key] = ast.literal_eval(value)
-					except (ValueError, SyntaxError):
-							# Fallback for unquoted string lists like [V1,V2,CL,Q]
-							inner = value[1:-1]
-							result[key] = [x.strip() for x in inner.split(',')]
-			else:
-					# Handle numbers and plain strings
-					try:
-							if '.' in value or 'e' in value.lower():
-									result[key] = float(value)
-							else:
-									result[key] = int(value)
-					except ValueError:
-							result[key] = value
+		# Handle lists and tuples
+		if value.startswith('[') and value.endswith(']'):
+			try:
+				# Safely evaluate literal Python structures (like bounds)
+				result[key] = ast.literal_eval(value)
+			except (ValueError, SyntaxError):
+				# Fallback for unquoted string lists like [V1,V2,CL,Q]
+				inner = value[1:-1]
+				result[key] = [x.strip() for x in inner.split(',')]
+		else:
+				# Handle numbers and plain strings
+			try:
+				if '.' in value or 'e' in value.lower():
+					result[key] = float(value)
+				else:
+					result[key] = int(value)
+			except ValueError:
+				result[key] = value
 							
 	return result
 
@@ -268,51 +274,63 @@ def parse_text_content(input_str,action):
 	content=content[1].strip(" ")
 	return {"text": content}
 
-def parse_lsa_command(input_str):
-		# Remove the command prefix 'runlsa '
-		content = input_str.split("lsa ")
-		content=content[1]
+def parse_lsa_command(input_str,outputtemplate):
+	# Remove the command prefix 'runlsa '
+	content = input_str.split("lsa ")
+	content=content[1]
 
-		# Regex: captures key name, then either a bracketed list [...] or a non-space value
-		pattern = r'(\w+)=((?:\[.*?\])|(?:\S+))'
-		matches = re.findall(pattern, content)
+	# Regex: captures key name, then either a bracketed list [...] or a non-space value
+	pattern = r'(\w+)=((?:\[.*?\])|(?:\S+))'
+	matches = re.findall(pattern, content)
 
-		simparams_dict={"dose_species":None,"interval_days":None,"simtime_days":None,"dose_nmoles":None}
-		p_dict={"parameters":None,"lowvalues":None,"highvalues":None}
-		outputdict={"parameters":p_dict,"observable":None,"simparams":simparams_dict}
+	# simparams_dict={"dose_species":None,"interval_days":None,"simtime_days":None,"dose_nmoles":None}
+	# p_dict={"parameters":None,"lowvalues":None,"highvalues":None}
+	# outputdict={"parameters":p_dict,"observable":None,"simparams":simparams_dict}
+	outputdict=outputtemplate
 
-		result = {}
-		for key, val in matches:
-			if key in ["parameters","lowvalues","highvalues"]:
-				outputdict["parameters"][key] = ast.literal_eval(val)
-			elif key in ["dose_species","interval_days","simtime_days","dose_nmoles"]:
-				outputdict["simparams"][key]=ast.literal_eval(val)
-			else:
-				outputdict[key] = ast.literal_eval(val)
+	for key, val in matches:
+		if key in ["parameters","lowvalues","highvalues"]:
+			outputdict["parameters"][key] = ast.literal_eval(val)
+		elif key in ["dose_species","interval","simulationtime","dose"]:
+			outputdict["simparams"][key]=ast.literal_eval(val)
+		else:
+			outputdict[key] = ast.literal_eval(val)
 
-		return outputdict
+	return outputdict
 
 def parse_nca_command(input_str):
-		# Matches key=value pairs, handling values with brackets or quotes
-		content = input_str.strip().split("nca ")
-		content=content[1]
+	# Matches key=value pairs, handling values with brackets or quotes
+	content = input_str.strip().split("nca ")
+	content=content[1]
+	
+	pattern = r"(\w+)=([^ ]+)"
+	matches = re.findall(pattern, content)
+	
+	result = {}
+	for key, val in matches:
+		# ast.literal_eval safely converts '[1]' to [1] and "'str'" to "str"
+		parsed_val = ast.literal_eval(val)
 		
-		pattern = r"(\w+)=([^ ]+)"
-		matches = re.findall(pattern, content)
-		
-		result = {}
-		for key, val in matches:
-				# ast.literal_eval safely converts '[1]' to [1] and "'str'" to "str"
-				parsed_val = ast.literal_eval(val)
+		# If the value is a single-element list, extract the element
+		if isinstance(parsed_val, list) and len(parsed_val) == 1:
+			parsed_val = parsed_val[0]
 				
-				# If the value is a single-element list, extract the element
-				if isinstance(parsed_val, list) and len(parsed_val) == 1:
-						parsed_val = parsed_val[0]
-						
-				result[key] = parsed_val
-				
-		return result
+		result[key] = parsed_val
+			
+	return result
 
+def parse_simulate_command(input_str,outputtemplate):
+	userwords=input_str.split(" ")
+	actionparams=outputtemplate
+	for w in userwords:
+		if len(w.split("="))==2:
+			actionparam,value=w.split("=")
+			if actionparam in ["dose_species"]:
+				actionparams[actionparam]=value
+			else:
+				actionparams[actionparam]=float(value)
+
+	return outputtemplate
 
 def parseuserinput(userinput:str,species_dict=None):
 	action=findaction(userinput)
@@ -321,27 +339,36 @@ def parseuserinput(userinput:str,species_dict=None):
 	userwords=userinput.split(" ")
 	if action=="update":
 		actionparams=[]
+		# [{'name': 'Vc', 'new_value': 2.77}, {'name': 'Vp', 'new_value': 5.16}, {'name': 'Q_D', 'new_value': 0.199}, {'name': 'CL_D', 'new_value': 0.421}, {'name': 'Kon', 'new_value': 1.0}, {'name': 'Koff', 'new_value': 0.048}]
 		for w in userwords:
 			if len(w.split("="))==2:
 				actionparam,value=w.split("=")
 				actionparams.append({"name":actionparam,"new_value":float(value)})
 	elif action=="find":
-		actionparams=parse_find_command(userinput)
+		outputtemplate={'metric': '', 't': 21, 'dataid': None, 'time': None, 'drug': None, 'target': None, 'complex': None}		
+		actionparams=parse_find_command(userinput,outputtemplate)
 	elif action in "plot":
-		actionparams=parse_plot_command(userinput)
+		outputtemplate={'dataid': [], 'xdata': [], 'ydata': [], 'legend': [], 'plotstyle': [], 'axeslimits': [0,0,0,0], 'title': '', 'xlabel': '', 'ylabel': '', 'yscale': 'linear'}
+		actionparams=parse_plot_command(userinput,outputtemplate)
 	elif action=="scale":
-		actionparams=parse_scale_command(userinput)
+		outputtemplate={'parameters': [], 'method': 'allometry', 'factors': [], 'currentanimalwt': 3, 'targetanimalwt': 70}
+		actionparams=parse_scale_command(userinput,outputtemplate)
 	elif action=="lsa":
-		actionparams=parse_lsa_command(userinput)
+		outputtemplate={'parameters': {'parameters': [], 'lowvalues': [], 'highvalues': []}, 'observable': '', 'simparams': {'dose_species': '', 'interval': 21, 'simulationtime': 21, 'dose': 0}}
+		actionparams=parse_lsa_command(userinput,outputtemplate)
 	elif action=="nca":
 		actionparams=parse_nca_command(userinput)
 	elif action in ["section","note"]:
 		actionparams=parse_text_content(userinput,action)
+		# {'text': ''}
 	elif action=="calibrate":
-		actionparams=parse_calibrate_command(userinput)
+		outputtemplate={'dataid': 1, 'time': 'Time', 'independent': None, 'dose': None, 'objective': None, 'parameters': [], 'bounds': []}
+		actionparams=parse_calibrate_command(userinput,outputtemplate)
+	elif action=="simulate":
+		outputtemplate={'dose_species': None, 'dose': 0, 'interval': 0, 'simulationtime': 0}
+		actionparams=parse_simulate_command(userinput,outputtemplate)
 	else:
 		actionparams={}
-		print(userwords)
 		for w in userwords:
 			if len(w.split("="))==2:
 				actionparam,value=w.split("=")
@@ -352,6 +379,23 @@ def parseuserinput(userinput:str,species_dict=None):
 					actionparams[actionparam]=float(value)
 
 	return action,actionparams
+
+def verify_actionparams(action,actionparams):
+	if action=="update":
+		if len(actionparams)==0:
+			return False
+	elif action in ["find","plot","scale","lsa","section","note","calibrate","simulate"]:
+		for k,v in actionparams.items():
+			if v is None:
+				return False
+			elif type(v) is list and len(v)==0:
+				return False
+			elif type(v) is str and v=='':
+				return False
+			elif type(v) in [float,int] and v==0:
+				return False
+				
+	return True
 
 
 def find_metric(metric_name,df_full,t,species_dict):

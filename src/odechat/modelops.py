@@ -63,14 +63,14 @@ def simulate(modelstr:str,simparams:dict):
 	# param_table=model_info.get_parameters(model=modelobj).reset_index()
 	# print(param_table[['name','unit','initial_value']])
 
-	simtime=simparams["simtime_days"]
-	doseinterval=simparams["interval_days"]
+	simtime=simparams["simulationtime"]
+	doseinterval=simparams["interval"]
 	dosecycles=math.floor(simtime/doseinterval)
 	partialcycletime=simtime - (doseinterval*dosecycles)
 
 	entiresimulation=pd.DataFrame()
 	for cycle in range(dosecycles):
-		curdosespeciesval=model_info.get_species(model=modelobj)['initial_concentration'].get(simparams["dose_species"])+simparams["dose_nmoles"]
+		curdosespeciesval=model_info.get_species(model=modelobj)['initial_concentration'].get(simparams["dose_species"])+simparams["dose"]
 		model_info.set_species(simparams["dose_species"],model=modelobj,initial_concentration=curdosespeciesval)
 		cursimulation=task_timecourse.run_time_course(doseinterval,model=modelobj,update_model=True).reset_index()
 		if entiresimulation.empty:
@@ -80,7 +80,7 @@ def simulate(modelstr:str,simparams:dict):
 			entiresimulation=pd.concat([entiresimulation,cursimulation],ignore_index=True)
 
 	if partialcycletime>0:
-		curdosespeciesval=model_info.get_species(model=modelobj)['initial_concentration'].get(simparams["dose_species"])+simparams["dose_nmoles"]
+		curdosespeciesval=model_info.get_species(model=modelobj)['initial_concentration'].get(simparams["dose_species"])+simparams["dose"]
 		model_info.set_species(simparams["dose_species"],model=modelobj,initial_concentration=curdosespeciesval)
 		cursimulation=task_timecourse.run_time_course(partialcycletime,model=modelobj,update_model=True).reset_index()
 		if entiresimulation.empty:
@@ -215,8 +215,8 @@ def calibrate(modelstr:str,calibparameters:dict):
 
 	# initial amount = 20 is coming as follows, 1mg, Drug MW=150KDa. 1mg = 6.67nmoles
 	DrugWT=150 # KDa
-	dose_nmoles=1*1000/DrugWT
-	model_info.set_species("Drugca",initial_concentration=dose_nmoles,concentration=dose_nmoles,model=modelobj)
+	dose=1*1000/DrugWT
+	model_info.set_species("Drugca",initial_concentration=dose,concentration=dose,model=modelobj)
 	model_info.set_species("Drugpa",initial_concentration=0,concentration=0,model=modelobj)
 	# model_info.add_species("Drugcc",type='assignment',model=modelobj,expression="[Drugca]/Values[V1].InitialValue")
 	# model_info.set_model_unit(quantity_unit='nmol',model=modelobj)

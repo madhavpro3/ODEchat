@@ -119,7 +119,7 @@ def updatemsgblock(chatmsg):
 						if 'Group' in st.session_state["datadb"][curdataid-1]["data"].columns:
 							curplotdata["Group"]=st.session_state["datadb"][curdataid-1]["data"]["Group"]
 
-						if "axeslimits" not in plotproperties:
+						if len(plotproperties['axeslimits'])==0:
 							plotproperties["axeslimits"]=[min(curplotdata["xdata"]),max(curplotdata["xdata"]),
 							min(curplotdata["ydata"]),max(curplotdata["ydata"])]
 
@@ -146,9 +146,16 @@ def updatemsgblock(chatmsg):
 
 				plt.title(plotproperties["title"])
 				if len(plotproperties["plotstyle"])>0 and plotproperties["plotstyle"][0]!="b":
+					print(plotproperties)
+					print(plotproperties["axeslimits"][:2])
+					print(plotproperties["axeslimits"][2:])
 					plt.xlim(plotproperties["axeslimits"][:2])
 					plt.ylim(plotproperties["axeslimits"][2:])
-					plt.yscale(plotproperties["yscale"])
+
+					if plotproperties["yscale"]=="log":
+						plt.yscale("symlog")
+					else:
+						plt.yscale(plotproperties["yscale"])
 
 				plt.xlabel(plotproperties["xlabel"])
 				plt.ylabel(plotproperties["ylabel"])
@@ -186,6 +193,7 @@ def runaction_updatedb(idnum,task,action,actionparams):
 
 	if actionresult["plot"] is not None:
 		newid=len(st.session_state["plotdb"])+1 # new row number
+		print(f"in demo runaction: {actionresult["plot"]}")
 		st.session_state["plotdb"].append({"id":newid,"properties":actionresult["plot"]})
 		msg[f"plotid"]=newid
 
@@ -219,23 +227,31 @@ def verify_eq():
 #----------------------------- Dialogs ----------------------------------------
 
 @st.dialog("Simulation inputs",width="medium")
-def simulate_input_dialog():
+def simulate_input_dialog(actionparams):
 	l,m1,m2,r=st.columns(4,vertical_alignment="bottom")
-	sim_inputs={"dose_species":"","dose_nmoles":0,"interval_days":0,"simtime_days":0}
+	# outputtemplate={'dose_species': '', 'dose': 0, 'interval': 21.0, 'simulationtime': 21.0}
+	sim_inputs=actionparams
 
 	with l:
 		modelobj=model_io.import_sbml(st.session_state["statedb"][st.session_state["curmodelstate"]])
 		specieslist=model_info.get_species(modelobj).index.tolist()
-		sim_inputs["dose_species"]=st.selectbox("Species",options=specieslist)
+
+		speciesindex=0
+		try:
+			speciesindex=specieslist.index(actionparams["dose_species"])
+		except:
+			print("Species not found")
+
+		sim_inputs["dose_species"]=st.selectbox("Species",index=speciesindex,options=specieslist)
 
 	with m1:
-		sim_inputs["dose_nmoles"]=st.number_input("Dose (nanomoles)",value=3)
+		sim_inputs["dose"]=st.number_input("Dose",value=actionparams["dose"])
 
 	with m2:
-		sim_inputs["interval_days"]=st.number_input("Interval (days)",value=21)
+		sim_inputs["interval"]=st.number_input("Interval",value=actionparams["interval"])
 
 	with r:
-		sim_inputs["simtime_days"]=st.number_input("Time (days)",value=21)
+		sim_inputs["simulationtime"]=st.number_input("Time",value=actionparams["simulationtime"])
 
 	if st.button("Simulate"):
 		st.session_state["temp_parameters"]["actionparams"]=sim_inputs
@@ -284,8 +300,10 @@ def lsa_dialog():
 		st.rerun()
 
 
-@st.dialog('Plotting',width="large",dismissible=False)
-def plot_dialog():
+@st.dialog('Plotting',width="large",dismissible=True)
+def plot_dialog(actionparams):
+	# outputtemplate={'dataid': [], 'xdata': [], 'ydata': [], 'legend': [], 
+	# 'plotstyle': [], 'axeslimits': [], 'title': '', 'xlabel': '', 'ylabel': '', 'yscale': 'linear'}
 	plot_col,options_col=st.columns(2)
 
 	with options_col:
@@ -295,8 +313,8 @@ def plot_dialog():
 			# plot y and x limits
 			# title, x,y labels
 
-			plotproperties={"dataid":[],"axeslimits":[],'legend':[],"plotstyle":[],"xdata":[],"ydata":[],
-			"title":"","xlabel":"","ylabel":"","yscale":"","fontsize":15,"fontstyle":"bold"}
+			plotproperties=actionparams
+			
 
 			# plotdata=st.selectbox("Simulation",options=["Sim "+str(i+1) for i in range(len(st.session_state["datadb"]))])
 			# if st.button("Show axes options"):
@@ -307,17 +325,22 @@ def plot_dialog():
 					specieslist=list(datadbrow["data"].columns)
 					break
 
-			# if len(st.session_state["datadb"])>0:
-			#     specieslist=list(st.session_state["datadb"][0]["data"].columns)
-
-			plotdata_placeholder=pd.DataFrame({"Simulation":[],
+			# plotdata_placeholder={}
+			# if len(actionparams["dataid"])>0:
+			# 	for k in ["dataid","xdata","ydata","legend","plotstyle"]:
+			# 		plotdata_placeholder[k]=actionparams[k]
+			# 	plotdata_placeholder=pd.DataFrame(plotdata_placeholder)
+			# else:
+			# 	# plotdata_placeholder=pd.DataFrame({"Simulation":[],
+			# 	# 	"xdata":specieslist[0],"ydata":specieslist[1],"legend":specieslist[1],"style":"-"})
+			plotdata_placeholder=pd.DataFrame({"dataid":[],
 				"xdata":specieslist[0],"ydata":specieslist[1],"legend":specieslist[1],"style":"-"})
 
 			st.session_state["temp_parameters"]["actionparams"]=st.data_editor(
 				plotdata_placeholder,
 				column_config={
-					"Simulation": st.column_config.SelectboxColumn(
-						"Data ID",
+					"dataid": st.column_config.SelectboxColumn(
+						"dataid",
 						# options=[str(i+1) for i in range(len(st.session_state["datadb"]))],
 						options=[str(inx+1) for inx,row in enumerate(st.session_state["datadb"]) if row["action"]=="simulate"],
 						required=True,
@@ -344,33 +367,46 @@ def plot_dialog():
 			)
 
 			labels_cols=st.columns(3)
-			plotproperties["title"]=labels_cols[0].text_input("",placeholder="title",value="")
-			plotproperties["xlabel"]=labels_cols[1].text_input("",placeholder="x label",value="Time")
-			plotproperties["ylabel"]=labels_cols[2].text_input("",placeholder="y label",value="Concentration")
+			plotproperties["title"]=labels_cols[0].text_input("",placeholder="title",value=actionparams["title"])
+			plotproperties["xlabel"]=labels_cols[1].text_input("",placeholder="x label",value=actionparams["xlabel"])
+			plotproperties["ylabel"]=labels_cols[2].text_input("",placeholder="y label",value=actionparams["ylabel"])
 
 			limits_cols=st.columns(4)
-			xlow=limits_cols[0].number_input("xmin",value=0)
-			xhigh=limits_cols[1].number_input("xmax",value=0)
-			ylow=limits_cols[2].number_input("ymin",value=0)
-			yhigh=limits_cols[3].number_input("ymax",value=0)
+			xlow=limits_cols[0].number_input("xmin",value=actionparams["axeslimits"][0])
+			xhigh=limits_cols[1].number_input("xmax",value=actionparams["axeslimits"][1])
+			ylow=limits_cols[2].number_input("ymin",value=actionparams["axeslimits"][2])
+			yhigh=limits_cols[3].number_input("ymax",value=actionparams["axeslimits"][3])
 			plotproperties["axeslimits"]=[xlow,xhigh,ylow,yhigh]
 
 			scale_cols=st.columns(2)
-			plotproperties["yscale"]=scale_cols[0].selectbox("Y scale",options=["linear","log"])            
+			scaleindex=0
+			scaleoptions=["linear","log"]
+			try:
+				scaleindex=scaleoptions.index(actionparams["yscale"])
+			except:
+				print("scale option not found")
+
+			plotproperties["yscale"]=scale_cols[0].selectbox("Y scale",options=scaleoptions,index=scaleindex)
 
 			st.form_submit_button("Preview")
 
 
 	with plot_col:
 		if st.session_state["temp_parameters"]["actionparams"] is not None:
+			for k in ["dataid","legend","plotstyle","xdata","ydata"]:
+				plotproperties[k]=[]
+
 			for row in st.session_state["temp_parameters"]["actionparams"].itertuples():
 				# simnumber=int(row.Simulation.split(" ")[1])
-				simnumber=int(row.Simulation)
+				simnumber=int(row.dataid)
 				plotproperties["dataid"].append(simnumber)
-				plotproperties["legend"].append(row.legend)
-				plotproperties["plotstyle"].append(row.style)
 				plotproperties["xdata"].append(row.xdata)
 				plotproperties["ydata"].append(row.ydata)
+				if row.legend is None:
+					plotproperties["legend"].append(row.ydata)
+				else:
+					plotproperties["legend"].append(row.legend)
+				plotproperties["plotstyle"].append(row.style)
 				# plotproperties["axeslimits"][1]=max([plotproperties["axeslimits"][1],curplotdata.max(axis=0)["xdata"]])
 				# plotproperties["axeslimits"][3]=max([plotproperties["axeslimits"][3],curplotdata.max(axis=0)["ydata"]])
 
@@ -399,7 +435,10 @@ def plot_dialog():
 				plt.xlim([min(allplotdata["xdata"]),max(allplotdata["xdata"])])
 				plt.ylim([min(allplotdata["ydata"]),max(allplotdata["ydata"])])
 
-			plt.yscale(plotproperties["yscale"])
+			if plotproperties["yscale"]=="log":
+				plt.yscale("symlog")
+			else:
+				plt.yscale(plotproperties["yscale"])
 			plt.xlabel(plotproperties["xlabel"])
 			plt.ylabel(plotproperties["ylabel"])
 			plt.legend()
@@ -451,17 +490,17 @@ def create_workflow_project():
 		"nca dataid=[1] time='Time' concentration='Concentration_nM' dose='Dose_mg'",
 		"note: Assuming the MW=150KDa",
 		f"calibrate dataid=1 time=Time independent=Concentration_nM dose=Dose_mg objective=Drugcc parameters=[V1,V2,CL,Q] bounds=[(1e-3,1),(1e-3,1),(1e-3,1),(1e-3,1)]",
-		f"simulate dose_species=Drugca dose_nmoles=20 interval_days=14 simtime_days=14",
-		f"simulate dose_species=Drugca dose_nmoles=60 interval_days=14 simtime_days=14",
-		f"simulate dose_species=Drugca dose_nmoles=200 interval_days=14 simtime_days=14",
+		f"simulate dose_species=Drugca dose=20 interval=14 simulationtime=14",
+		f"simulate dose_species=Drugca dose=60 interval=14 simulationtime=14",
+		f"simulate dose_species=Drugca dose=200 interval=14 simulationtime=14",
 		"plot dataid=[4,5,6,1] xdata=['Time','Time','Time','Time'] ydata=['Drugcc','Drugcc','Drugcc','Concentration_nM'] plotstyle=['-','-','-','-'] legend=['3mg','9mg','30mg','Data'] title='PK' xlabel='Time' ylabel='Drug Concentration' yscale='linear' axeslimits=[0,14,0,2500]",
 		"section: Translation to Human",
 		"scale parameters=['V1','V2','CL','Q'] method=allometry factors=[1,1,0.8,0.8] currentanimalwt=3 targetanimalwt=70",
 		# "section: Scaling V1,V2 parameters with a factor of 1 and CL,Q with a factor of 0.8. Running human PK prediction at 1,5,10,20 mpk doses",
-		"simulate dose_species=Drugca dose_nmoles=466.67 interval_days=14 simtime_days=180",
-		"simulate dose_species=Drugca dose_nmoles=2333.33 interval_days=14 simtime_days=180",
-		"simulate dose_species=Drugca dose_nmoles=4666.67 interval_days=14 simtime_days=180",
-		"simulate dose_species=Drugca dose_nmoles=9333.34 interval_days=14 simtime_days=180",
+		"simulate dose_species=Drugca dose=466.67 interval=14 simulationtime=180",
+		"simulate dose_species=Drugca dose=2333.33 interval=14 simulationtime=180",
+		"simulate dose_species=Drugca dose=4666.67 interval=14 simulationtime=180",
+		"simulate dose_species=Drugca dose=9333.34 interval=14 simulationtime=180",
 		"plot dataid=[8,9,10,11] xdata=['Time','Time','Time','Time'] ydata=['Drugcc','Drugcc','Drugcc','Drugcc'] plotstyle=['-','-','-','-'] legend=['1mpk','5mpk','10mpk','20mpk'] title='Human PK' xlabel='Time (days)' ylabel='Plasma concentration (nM)' yscale='linear' axeslimits=[0,180,0,1e04]",
 		]
 		# 1mpk=70mg 1mole=150Kg, 70mg = 70/150 umole = 7000/15 nmole =  
@@ -535,19 +574,18 @@ def create_workflow_project():
 		"show controls",
 		"show model",
 		"section: Analysis of Novel molecule",
-		f"simulate dose_species=Dc dose_nmoles=10 interval_days=21 simtime_days=360",
+		f"simulate dose_species=Dc dose=10 interval=21 simulationtime=360",
 		"find ro t=21 dataid=2 time='Time' drug='Dc' target='Tc' complex='D_T_c'",
-		f"lsa parameters=['CL_D','Vc','Koff'] lowvalues=[0.1,1.805,0.1] highvalues=[0.4,7.22,10] observable='D_T_c' dose_species='Dc' dose_nmoles=10 simtime_days=21 interval_days=30",
+		f"lsa parameters=['CL_D','Vc','Koff'] lowvalues=[0.1,1.805,0.1] highvalues=[0.4,7.22,10] observable='D_T_c' dose_species='Dc' dose=10 simulationtime=21 interval=30",
 		"section: Analysis of benchmark molecule",
 		f"update Vc={bm_Vc} Vp={bm_Vp} Q_D={bm_Q} CL_D={bm_CL} Kon={bm_Kon} Koff={bm_Koff}",
 		f"note: {benchmark} parameters are taken from {bm_ref}",
-		f"simulate dose_species=Dc dose_nmoles=10 interval_days=21 simtime_days=360",
+		f"simulate dose_species=Dc dose=10 interval=21 simulationtime=360",
 		"find ro t=21 dataid=5 time='Time' drug='Dc' target='Tc' complex='D_T_c'",
 		"section: Comparison of molecules",
 		"plot dataid=[2, 5] xdata=['Time', 'Time'] ydata=['Dc', 'Dc'] legend=['Novel', 'Benchmark'] plotstyle=['-', '-'] axeslimits=[0, 180, 0, 50] title='' xlabel='Time (days)' ylabel='Drug Concentration (nM)' yscale='linear'",
 		"plot dataid=[2, 5] xdata=['Time', 'Time'] ydata=['D_T_c', 'D_T_c'] legend=['Novel', 'Benchmark'] plotstyle=['-', '-'] axeslimits=[0, 180, 0, 5] title='' xlabel='Time (days)' ylabel='Complex Concentration (nM)' yscale='linear'"
 		]
-
 		workflow_listed=[f"{i+1}. {wf}" for i,wf in enumerate(workflow)]
 		workflow_editable=("\n").join(workflow_listed)
 		tasks=st.text_area(label="Tasks",value=workflow_editable,height="content")
@@ -578,19 +616,8 @@ def create_workflow_project():
 		tasks_list=tasks.split("\n")
 		for taskinx,task in enumerate(tasks_list):
 			action,actionparams=fo.parseuserinput(task)
-
-			# if wftype=="PK/PD Visualization":
-			# 	df_new_allgroups=pd.DataFrame()
-			# 	Time_min, Time_max = df_NHPPK['Time'].min(), df_NHPPK['Time'].max()
-			# 	Time_newpoints=np.arange(Time_min,Time_max,0.1)
-
-			# 	for group in df_NHPPK["Group"].unique():
-			# 		df_curgrp=df_NHPPK[df_NHPPK["Group"]==group]
-			# 		d=np.interp(Time_newpoints,df_curgrp['Time'],df_curgrp['Concentration'])
-			# 		df_new=pd.DataFrame({"Time":Time_newpoints,"Concentration":d,"Group":group})
-			# 		df_new_allgroups=pd.concat([df_new_allgroups,df_new])
-					
-			# 	df_NHPPK_averaged=df_new_allgroups.groupby(actionparams["concentration"])
+			print(action)
+			print(actionparams)
 
 			msg=runaction_updatedb(3+taskinx,task,action,actionparams)
 			st.session_state["chatdb"].append(msg)
@@ -620,11 +647,11 @@ def dialog_create_workflow():
 	task_options=["Simulate","Plot","Calibrate","Local Sensitivity Analysis","Non-compartmental Analysis","Find a metric","Upload file"]
 	# selectedtasks=st.multiselect("Task",options=task_options)
 
-	task_parameters={
-	"Simulate":"simulate dose_species='<speciesname>' dose_nmoles=10 interval_days=21 simtime_days=21",
-	"Plot":"plot dataid=[<>] xdata=['<>'] ydata=['<>'] legend=['<>'] plotstyle=['-'] axeslimits=[0, 21, 0, 100] title='' xlabel='' ylabel='' yscale='linear'",
-	"Local Sensitivity Analysis":"lsa parameters=['<parameter1>','<parameter2>'] lowvalues=[0,0] highvalues=[1,1] observable='<speciesname>' dose_species='<speciesname>' dose_nmoles=<dosevalue> simtime_days=21 interval_days=21",
-	"Non-compartmental Analysis":"nca dataid=[1] time='<Time column>' concentration='<concentration column>' dose='<dose column>'"}
+	# task_parameters={
+	# "Simulate":"simulate dose_species='<speciesname>' dose=10 interval_days=21 simtime_days=21",
+	# "Plot":"plot dataid=[<>] xdata=['<>'] ydata=['<>'] legend=['<>'] plotstyle=['-'] axeslimits=[0, 21, 0, 100] title='' xlabel='' ylabel='' yscale='linear'",
+	# "Local Sensitivity Analysis":"lsa parameters=['<parameter1>','<parameter2>'] lowvalues=[0,0] highvalues=[1,1] observable='<speciesname>' dose_species='<speciesname>' dose_nmoles=<dosevalue> simtime_days=21 interval_days=21",
+	# "Non-compartmental Analysis":"nca dataid=[1] time='<Time column>' concentration='<concentration column>' dose='<dose column>'"}
 
 	curdataid=-1
 	curmodelstate=0
@@ -668,19 +695,14 @@ def dialog_create_workflow():
 		st.session_state["wftasks"]=[] # Initializing to empty
 		st.toast("WF created yaay!")
 
-@st.dialog("addequations",width="large")
+@st.dialog("Equations",width="large")
 def dialog_addequations():
-	sampleeq="""d[DPlasma]/dt=([DLymph]*L -[DPlasma]*0.33*L*0.05 - [DPlasma]*0.67*L*0.58 - CLp*[DPlasma])/Vp \n d[DTight]/dt=(0.33*L*0.05*[DPlasma]-0.33*L*0.8*[DTight])/Vtight \n d[DLeaky]/dt=(0.67*L*0.58*[DPlasma]-0.67*L*0.8*[DLeaky])/Vleaky \n d[DLymph]/dt=(0.33*L*0.8*[DTight]+0.67*L*0.8*[DLeaky]-[DLymph]*L)/Vlymph"""
+	sampleeq="""d[CPlasma]/dt=([CLymph]*L -[CPlasma]*0.33*L*(1-sigTight) - [CPlasma]*0.67*L*(1-sigLeaky) - CLp*[CPlasma])/VPlasma \nd[CTight]/dt=(0.33*L*(1-sigTight)*[CPlasma]-0.33*L*(1-sigLymph)*[CTight])/(0.65*ISF*Kp) \nd[CLeaky]/dt=(0.67*L*(1-sigLeaky)*[CPlasma]-0.67*L*(1-sigLymph)*[CLeaky])/(0.35*ISF*Kp) \nd[CLymph]/dt=(0.33*L*(1-sigLymph)*[CTight]+0.67*L*(1-sigLymph)*[CLeaky]-[CLymph]*L)/VLymph"""
 
 	with st.form("form_eq"):
 		st.text_area("Provide model equations",sampleeq,key="text_modelequations")
 		st.markdown("**Note:**")
 		st.text("1. Equations should be written as d[species1]/dt = p1*[species1] - p2*[species2]...\n2. Separate equations with a new line")
-		# st.markdown("1. Equations should be written as d[species1]/dt = p1*[species1] - p2*[species2]...")
-		# st.markdown("2. Separate equations with a new line")
-		# st.button("Verify",on_click=show_species_params_tables)
-
-		# model_tables=st.empty()
 
 		st.form_submit_button("Verify equations",on_click=verify_eq)
 
@@ -692,8 +714,14 @@ def dialog_addequations():
 		modelobj=mo.parseequations(st.session_state["text_modelequations"],st.session_state["name"])
 		model_species=model_info.get_species(model=modelobj).reset_index()
 		model_parameters=model_info.get_parameters(model=modelobj).reset_index()
+		# parameters:L=0.12 mL/hr = 2.88e-3 L/day
+		# Vp=0.85E-3 L
+		# ISF=4.35E-3 L
+		# CLp=0.499E-5 L/h = 11.976E-5 L/day
+		# Kp=0.8 for IgG1 and 0.4 for IgG4 mAbs
+		# sig1=0.95, sig2=0.421
 
-		speciestable_col,paramtable_col=st.columns(2)
+		paramtable_col,speciestable_col=st.columns(2)
 
 		with speciestable_col:
 			speciesvals=st.data_editor(model_species[["name","unit","initial_concentration"]],disabled=["name"])
@@ -800,6 +828,26 @@ with chat_panel:
 			curchatmsg={"id":st.session_state.counter,"userask":userask,"action":None,"actionparams":None,
 				"plotid":-1,"dataid":-1,"stateid":-1,"contentid":-1}
 
+			# action,actionparams=fo.parseuserinput(userask)
+			# if fo.verify_actionparams(action,actionparams):
+			# 	st.toast("All inputs given!")
+			# 	msg=runaction_updatedb(1,userask,action,actionparams)
+			# 	st.session_state["chatdb"].append(msg)
+			# else:
+			# 	st.toast("Please check your inputs")
+			# 	if action=="simulate":
+			# 		simulate_input_dialog(actionparams)
+			# 	elif action=="plot":
+			# 		plot_dialog(actionparams)
+
+			# if actionparams is full, skip the dialog and run the action
+			# else populate the dialog with the provided input and ask for remaining
+
+# update VPlasma=0.85 VLymph=0.85 L=0.12 sigTight=0.95 sigLeaky=0.42 sigLymph=0.2 Kp=0.8 CLp=0.005 ISF=4.35
+# simulate dose_species=CPlasma dose_nmoles=188 interval_days=250 simtime_days=250
+# plot dataid=[3,3,3,3] xdata=['Time', 'Time', 'Time', 'Time'] ydata=['CPlasma', 'CLymph', 'CTight', 'CLeaky'] axeslimits=[0, 250, 0, 200] plotstyle=['-', '-', '-', '-'] legend=['CPlasma', 'CLymph', 'CTight', 'CLeaky'] title='' xlabel='Time' ylabel='Concentration' yscale='log'
+
+
 			ac=fo.findaction(userask)
 			if ac==None:
 				st.toast("dont understand")
@@ -817,11 +865,12 @@ with chat_panel:
 			# else, ask for the inputs
 			# st.session_state["temp_parameters"]={"action":ac}
 			if ac=="simulate":
-				simulate_input_dialog()
+				simulate_input_dialog({"dose_species":'',"dose":0,"interval":21,"simulationtime":21})
 			elif ac=="update":
 				updateparameters_dialog()
 			elif ac=="plot":
-				plot_dialog()
+				plot_dialog({'dataid': [], 'xdata': [], 'ydata': [], 'legend': [],
+					'plotstyle': [], 'axeslimits': [0,0,0,0], 'title': '', 'xlabel': '', 'ylabel': '', 'yscale': 'linear'})
 
 			curchatmsg["action"]=ac
 			curchatmsg["stateid"]=st.session_state["curmodelstate"]
@@ -924,19 +973,4 @@ with chat_panel:
 			st.session_state["temp_parameters"]={"chatmsg":None,"action":None,"actionparams":None}
 
 	with msgblock:
-			# frag_block()
-
-		# if len(st.session_state["statedb"])==0 & (st.session_state["id"] is not None):
-		# 	if st.button("Input equations"):
-		# 		dialog_addequations()
-
-		# 	st.markdown("Or")
-
-		# 	cols_selectingwf=st.columns(2,vertical_alignment="bottom")
-		# 	with cols_selectingwf[0]:
-		# 		selectedwf=st.selectbox("Workflow",options=["Exploration","ADC dose translation"])
-		# 	with cols_selectingwf[1]:
-		# 		st.button("Select")
-
-		# else:
 		updatemsgblock(st.session_state["chatdb"])
