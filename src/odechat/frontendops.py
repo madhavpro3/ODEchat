@@ -6,6 +6,7 @@ import modelops as mo
 import re
 from scipy import integrate
 import ast
+import streamlit as st
 
 # def loadproject(pid):
 #   # get the chat history, database for this project
@@ -134,6 +135,7 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 		return {"plot":None,"data":None,"content":ans,"modelstr":None}
 	elif action=="lsa":
 		lsa_df=mo.lsa(modelstr,actionparams["parameters"],actionparams["observable"],actionparams["simparams"])
+
 		return {"plot":None,"data":lsa_df,"content":None,"modelstr":None}
 	elif action=="nca":
 		nca_df=mo.nca(actionparams["data"],actionparams["columnmap"])

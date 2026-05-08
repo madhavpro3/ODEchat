@@ -245,7 +245,7 @@ def simulate_input_dialog(actionparams):
 		sim_inputs["dose_species"]=st.selectbox("Species",index=speciesindex,options=specieslist)
 
 	with m1:
-		sim_inputs["dose"]=st.number_input("Dose",value=actionparams["dose"])
+		sim_inputs["dose"]=st.number_input("Dose",value=float(actionparams["dose"]),step=0.01)
 
 	with m2:
 		sim_inputs["interval"]=st.number_input("Interval",value=actionparams["interval"])
@@ -279,24 +279,59 @@ def updateparameters_dialog():
 
 @st.dialog("LSA",width="medium")
 def lsa_dialog():
+	# outputtemplate={'parameters': {'parameters': [], 'lowvalues': [], 'highvalues': []},
+	# 'observable': '', 'simparams': {'dose_species': '', 'interval': 21, 'simulationtime': 21, 'dose': 0}}
+
 	# Get model parameters and their current values
 	# Take the parameters selected by users 
-	modeldf=mo.get_parameters(modelstr) # Cols = 'name','unit','initial_value'
-	modeldf["Select_for_LSA"]=False
-	modeldf["Lower"]=0.5
-	modeldf["Higher"]=2
-	lsaparams=st.data_editor(modeldf[["Type","Name","Value","Unit","Select_for_LSA","Lower","Higher"]],
-			disabled=["Type","Name","Unit","Lower","Higher"])
+	modelobj=model_io.import_sbml(st.session_state["statedb"][st.session_state["curmodelstate"]])
+	specieslist=model_info.get_species(modelobj).index.tolist()
 
-	lsa_inputs={"sel_params":[],"sel_objfunc":""}
+	param_table=model_info.get_parameters(model=modelobj).reset_index()
+	# modeldf=mo.get_parameters(st.session_state["statedb"][st.session_state["curmodelstate"]]) # Cols = 'name','unit','initial_value'
+
+	param_table["select_for_LSA"]=False
+	param_table["low_value"]=0.5*param_table["initial_value"]
+	param_table["high_value"]=2*param_table["initial_value"]
+
+	lsa_actionparams={'parameters': {'parameters': [], 'lowvalues': [], 'highvalues': []},
+	'observable': '', 'simparams': {'dose_species': '', 'interval': 21, 'simulationtime': 21, 'dose': 0}}
+
+	lsaparams=st.data_editor(param_table[["name","initial_value","unit","select_for_LSA","low_value","high_value"]],
+			disabled=["name","initial_value","unit"])
+
+	# lsa_inputs={"sel_params":[],"sel_objfunc":""}
 	for row in lsaparams.itertuples(index=False):
-		if row.Select_for_LSA:
-			lsa_inputs["sel_params"].append(row.Name)
+		if row.select_for_LSA:
+			lsa_actionparams["parameters"]["parameters"].append(row.name)
+			lsa_actionparams["parameters"]["lowvalues"].append(row.low_value)
+			lsa_actionparams["parameters"]["highvalues"].append(row.high_value)
 
-	lsa_inputs["sel_objfunc"]=st.selectbox("Objective function",options=["Cmax","AUC","ROlast"])
+
+	lsa_actionparams["observable"]=st.selectbox("Observable",options=specieslist)
+
+	st.text("Simulation settings")
+
+	l,m1,m2,r=st.columns(4,vertical_alignment="bottom")
+	# outputtemplate={'dose_species': '', 'dose': 0, 'interval': 21.0, 'simulationtime': 21.0}
+	sim_inputs={'dose_species': '', 'dose': 0, 'interval': 21.0, 'simulationtime': 21.0}
+
+	with l:
+		sim_inputs["dose_species"]=st.selectbox("Species",index=0,options=specieslist)
+
+	with m1:
+		sim_inputs["dose"]=st.number_input("Dose",value=0.0,step=0.01)
+
+	with m2:
+		sim_inputs["interval"]=st.number_input("Interval",value=21)
+
+	with r:
+		sim_inputs["simulationtime"]=st.number_input("Time",value=21)
+
+	lsa_actionparams["simparams"]=sim_inputs
 
 	if st.button("Run LSA"):
-		st.session_state["temp_parameters"]["actionparams"]=lsa_inputs
+		st.session_state["temp_parameters"]["actionparams"]=lsa_actionparams
 		st.rerun()
 
 
@@ -616,9 +651,10 @@ def create_workflow_project():
 		tasks_list=tasks.split("\n")
 		for taskinx,task in enumerate(tasks_list):
 			action,actionparams=fo.parseuserinput(task)
+
+			print(task)
 			print(action)
 			print(actionparams)
-
 			msg=runaction_updatedb(3+taskinx,task,action,actionparams)
 			st.session_state["chatdb"].append(msg)
 
@@ -851,15 +887,19 @@ with chat_panel:
 			ac=fo.findaction(userask)
 			if ac==None:
 				st.toast("dont understand")
-			elif ac=="showcontrols":
-				st.session_state["temp_parameters"]["actionparams"]={"action":"showcontrols"}
-			elif ac=="showmodel":
-				st.session_state["temp_parameters"]["actionparams"]={"action":"showmodel"}
-			elif ac=="showstate":
-				reqstatenum=fo.extract_int(userask)
-				st.session_state["temp_parameters"]["actionparams"]={"statenum":reqstatenum,"modelstr":st.session_state["statedb"][reqstatenum-1]}
-			elif ac=="selectstate":
-				st.session_state["temp_parameters"]["actionparams"]={"newstatenum":fo.extract_int(userask)}
+			# elif ac=="showcontrols":
+			# 	st.session_state["temp_parameters"]["actionparams"]={"action":"showcontrols"}
+			# elif ac=="showmodel":
+			# 	st.session_state["temp_parameters"]["actionparams"]={"action":"showmodel"}
+			# elif ac=="showstate":
+			# 	reqstatenum=fo.extract_int(userask)
+			# 	st.session_state["temp_parameters"]["actionparams"]={"statenum":reqstatenum,"modelstr":st.session_state["statedb"][reqstatenum-1]}
+			# elif ac=="selectstate":
+			# 	st.session_state["temp_parameters"]["actionparams"]={"newstatenum":fo.extract_int(userask)}
+
+			if ac in ["note","section","showcontrols","showmodel","showstate","selectstate"]:
+				ac,actionparams=fo.parseuserinput(userask)
+				st.session_state["temp_parameters"]["actionparams"]=actionparams
 
 			# Check if the action inputs are complete, if so take action
 			# else, ask for the inputs
@@ -871,6 +911,8 @@ with chat_panel:
 			elif ac=="plot":
 				plot_dialog({'dataid': [], 'xdata': [], 'ydata': [], 'legend': [],
 					'plotstyle': [], 'axeslimits': [0,0,0,0], 'title': '', 'xlabel': '', 'ylabel': '', 'yscale': 'linear'})
+			elif ac=="lsa":
+				lsa_dialog()
 
 			curchatmsg["action"]=ac
 			curchatmsg["stateid"]=st.session_state["curmodelstate"]
@@ -910,7 +952,7 @@ with chat_panel:
 
 			elif st.session_state["temp_parameters"]["chatmsg"]["action"]=="plot":
 				# For plot, actionparams are plotproperties [{"dataid":[],"plotstyle":[],"xdata":[],"ydata":[]}]
-				actionparamstr=" "
+				actionparamstr="plot "
 				# for inx,curdataid in enumerate(st.session_state["temp_parameters"]["actionparams"]["dataid"]):
 				#     actionparamstr+=f"({curdataid,st.session_state["temp_parameters"]["actionparams"]["xdata"][inx],st.session_state["temp_parameters"]["actionparams"]["ydata"][inx]}) "
 
@@ -928,45 +970,72 @@ with chat_panel:
 				#     actionparamstr+=f"{k}={v} "
 
 				actionparamstr=actionparamstr.rstrip(" ")
-				st.session_state["temp_parameters"]["chatmsg"]["userask"]+=actionparamstr
+				st.session_state["temp_parameters"]["chatmsg"]["userask"]=actionparamstr
+			elif st.session_state["temp_parameters"]["chatmsg"]["action"]=="lsa":
+				# "lsa parameters=['CL_D','Vc','Koff'] lowvalues=[0.1,1.805,0.1] highvalues=[0.4,7.22,10] observable='D_T_c' dose_species='Dc' dose=10 simulationtime=21 interval=30"
+				# outputtemplate={'parameters': {'parameters': [], 'lowvalues': [], 'highvalues': []},
+				# 'observable': '', 'simparams': {'dose_species': '', 'interval': 21, 'simulationtime': 21, 'dose': 0}}
+				actionparamstr="lsa "
+				for k,v in st.session_state["temp_parameters"]["actionparams"]["parameters"].items():
+					actionparamstr+=f"{k}={v} "
 
-			if st.session_state["temp_parameters"]["chatmsg"]["action"]=="selectstate":
-				st.session_state["curmodelstate"]=st.session_state["temp_parameters"]["actionparams"]["newstatenum"]
-				actionresult["data"]=mo.get_parameters(st.session_state["statedb"][st.session_state["curmodelstate"]])
-			else:
-				actionresult=fo.takeaction(st.session_state["temp_parameters"]["chatmsg"]["action"],
-					st.session_state["temp_parameters"]["chatmsg"]["actionparams"],modelstr)
+				actionparamstr+=f"observable={st.session_state["temp_parameters"]["actionparams"]["observable"]} "
+				for k,v in st.session_state["temp_parameters"]["actionparams"]["simparams"].items():
+					actionparamstr+=f"{k}={v} "
 
-
-			# Saving actionresult into respecitve dbs
-			# adding database id to the chatmsg
-			# save chatmsg to chatdb
-			if actionresult["plot"] is not None:
-				newid=len(st.session_state["plotdb"])+1 # new row number
-				st.session_state["plotdb"].append({"id":newid,"properties":actionresult["plot"]})
-				st.session_state["temp_parameters"]["chatmsg"][f"plotid"]=newid
-
-			if actionresult["data"] is not None:            
-				newid=len(st.session_state["datadb"])+1 # new row number
-				st.session_state["datadb"].append({"id":newid,"action":st.session_state["temp_parameters"]["chatmsg"]["action"],
-					"data":actionresult["data"],"stateid":st.session_state["temp_parameters"]["chatmsg"]["stateid"],"alias":None})
-				st.session_state["temp_parameters"]["chatmsg"][f"dataid"]=newid
-
-			if actionresult["content"] is not None:
-				newid=len(st.session_state["contentdb"])+1 # new row number
-				st.session_state["contentdb"].append({"id":newid,"content":actionresult["content"]})
-				st.session_state["temp_parameters"]["chatmsg"][f"contentid"]=newid
-
-			if actionresult["modelstr"] is not None:
-				# Add this to the model states and update the session model id
-				st.session_state["statedb"].append(actionresult["modelstr"])
-				st.session_state["curmodelstate"]=len(st.session_state["statedb"])-1
-				st.session_state["temp_parameters"]["chatmsg"]["stateid"]=st.session_state["curmodelstate"]
+				actionparamstr=actionparamstr.rstrip()
+				st.session_state["temp_parameters"]["chatmsg"]["userask"]=actionparamstr
 
 
-			# Updateing the stateid of the chat to reflect in the state label
-			st.session_state["temp_parameters"]["chatmsg"]["stateid"]=st.session_state["curmodelstate"]
-			st.session_state["chatdb"].append(st.session_state["temp_parameters"]["chatmsg"])
+			msg=runaction_updatedb(len(st.session_state["chatdb"])+1,st.session_state["temp_parameters"]["chatmsg"]["userask"],
+				st.session_state["temp_parameters"]["chatmsg"]["action"],st.session_state["temp_parameters"]["actionparams"])
+
+			st.session_state["chatdb"].append(msg)
+
+			# if st.session_state["temp_parameters"]["chatmsg"]["action"]=="selectstate":
+			# 	st.session_state["curmodelstate"]=st.session_state["temp_parameters"]["actionparams"]["newstatenum"]
+			# 	actionresult["data"]=mo.get_parameters(st.session_state["statedb"][st.session_state["curmodelstate"]])
+			# else:
+			# 	actionresult=fo.takeaction(st.session_state["temp_parameters"]["chatmsg"]["action"],
+			# 		st.session_state["temp_parameters"]["chatmsg"]["actionparams"],modelstr)
+
+			# if st.session_state["temp_parameters"]["chatmsg"]["action"]=="lsa":
+			# 	lsaplot={"dataid":[len(st.session_state["datadb"])+1],"xdata":['parameters'],"ydata":['sens_lowval','sens_highval'],
+			# 	"axeslimits":[0, 0, 0, 100],"plotstyle":['b'],"legend":['high'],
+			# 	"title":"LSA","xlabel":"%RO","ylabel":"Parameter","yscale":"linear"}
+
+			# 	actionresult["plot"]=lsaplot
+
+			# # Saving actionresult into respecitve dbs
+			# # adding database id to the chatmsg
+			# # save chatmsg to chatdb
+			# if actionresult["plot"] is not None:
+			# 	newid=len(st.session_state["plotdb"])+1 # new row number
+			# 	st.session_state["plotdb"].append({"id":newid,"properties":actionresult["plot"]})
+			# 	st.session_state["temp_parameters"]["chatmsg"][f"plotid"]=newid
+
+			# if actionresult["data"] is not None:            
+			# 	newid=len(st.session_state["datadb"])+1 # new row number
+			# 	st.session_state["datadb"].append({"id":newid,"action":st.session_state["temp_parameters"]["chatmsg"]["action"],
+			# 		"data":actionresult["data"],"stateid":st.session_state["temp_parameters"]["chatmsg"]["stateid"],"alias":None})
+			# 	st.session_state["temp_parameters"]["chatmsg"][f"dataid"]=newid
+
+			# if actionresult["content"] is not None:
+			# 	newid=len(st.session_state["contentdb"])+1 # new row number
+			# 	st.session_state["contentdb"].append({"id":newid,"content":actionresult["content"]})
+			# 	st.session_state["temp_parameters"]["chatmsg"][f"contentid"]=newid
+
+			# if actionresult["modelstr"] is not None:
+			# 	# Add this to the model states and update the session model id
+			# 	st.session_state["statedb"].append(actionresult["modelstr"])
+			# 	st.session_state["curmodelstate"]=len(st.session_state["statedb"])-1
+			# 	st.session_state["temp_parameters"]["chatmsg"]["stateid"]=st.session_state["curmodelstate"]
+
+
+			# # Updateing the stateid of the chat to reflect in the state label
+			# st.session_state["temp_parameters"]["chatmsg"]["stateid"]=st.session_state["curmodelstate"]
+
+			# st.session_state["chatdb"].append(st.session_state["temp_parameters"]["chatmsg"])
 
 
 			# resetting temp_parameters

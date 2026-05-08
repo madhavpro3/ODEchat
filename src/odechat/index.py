@@ -256,6 +256,7 @@ def lsa_dialog():
 	modeldf["Select_for_LSA"]=False
 	modeldf["Lower"]=0.5
 	modeldf["Higher"]=2
+
 	lsaparams=st.data_editor(modeldf[["Type","Name","Value","Unit","Select_for_LSA","Lower","Higher"]],
 			disabled=["Type","Name","Unit","Lower","Higher"])
 
