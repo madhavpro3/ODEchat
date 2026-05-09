@@ -83,7 +83,7 @@ def updatemsgblock(chatmsg):
 			if msg["action"]!="showstate":
 				labels=st.columns(2,width=150,gap=None)
 				with labels[0]:
-					st.badge(f"State: {msg["stateid"]}")
+					st.badge(f"State: {msg["stateid"]+1}")
 				if msg["dataid"]>-1:
 					with labels[1]:
 						st.badge(f"Data: {msg["dataid"]}")
@@ -146,9 +146,6 @@ def updatemsgblock(chatmsg):
 
 				plt.title(plotproperties["title"])
 				if len(plotproperties["plotstyle"])>0 and plotproperties["plotstyle"][0]!="b":
-					print(plotproperties)
-					print(plotproperties["axeslimits"][:2])
-					print(plotproperties["axeslimits"][2:])
 					plt.xlim(plotproperties["axeslimits"][:2])
 					plt.ylim(plotproperties["axeslimits"][2:])
 
@@ -168,8 +165,16 @@ def runaction_updatedb(idnum,task,action,actionparams):
 "plotid":-1,"dataid":-1,"stateid":st.session_state["curmodelstate"],"contentid":-1}
 
 	modelstr=""
+	# print(st.session_state["statedb"])
 	if len(st.session_state["statedb"])>0:
 		modelstr=st.session_state["statedb"][st.session_state["curmodelstate"]]
+
+	if action=="showstate":
+		if actionparams["statenum"]>=len(st.session_state["statedb"]):
+			st.toast("Please provide a valid statenum")
+			return msg
+		else:
+			actionparams["modelstr"]=st.session_state["statedb"][actionparams["statenum"]-1]
 
 	if action=="find":
 		actionparams["df"]=st.session_state["datadb"][actionparams["dataid"]-1]["data"]
@@ -652,9 +657,6 @@ def create_workflow_project():
 		for taskinx,task in enumerate(tasks_list):
 			action,actionparams=fo.parseuserinput(task)
 
-			print(task)
-			print(action)
-			print(actionparams)
 			msg=runaction_updatedb(3+taskinx,task,action,actionparams)
 			st.session_state["chatdb"].append(msg)
 
@@ -899,6 +901,7 @@ with chat_panel:
 
 			if ac in ["note","section","showcontrols","showmodel","showstate","selectstate"]:
 				ac,actionparams=fo.parseuserinput(userask)
+				print(f"identified action={ac}, acparams={actionparams}")
 				st.session_state["temp_parameters"]["actionparams"]=actionparams
 
 			# Check if the action inputs are complete, if so take action

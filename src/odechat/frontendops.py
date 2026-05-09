@@ -24,7 +24,7 @@ ROUTES={"showcontrols":[["view","show","list","controls","control"],"list contro
 	"update":[["update","change"],"update (parameter/species) to (value): updates the value of parameter or initial value of species"],
 	"plot":[["plot"],"plot: plots xvariable and yvariable from the last simulation result"],
 	"find":[["find","calculate","what","auc","cmax","rolast"],"find (metric): finds the value of given metric. Current metrics are Cmax, AUC, ROlast"],
-	"showstate":[["show","state","view"],"show model state (number): show the details of the selected model state"],
+	"showstate":[["show","state","view","showstate","viewstate"],"show model state (number): show the details of the selected model state"],
 	"selectstate":[["select","state","choose"],"select model state (number): selects the model state"],
 	"lsa":[["lsa"],"Run Local Sensitivity Analysis"],
 	"nca":[["nca"],"Run Non Compartmental Analysis"],
@@ -87,6 +87,7 @@ def findaction(userinput: str):
 			bestscore=curscore
 			bestroute=key
 
+	print(f"found ac={bestroute}")
 	return bestroute
 
 
@@ -106,6 +107,11 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 		paramtable=mo.get_parameters(modelstr)
 		modelnotes=mo.get_notes(modelstr)
 		return {"plot":None,"data":paramtable,"content":modelnotes,"modelstr":None}
+	elif action=="showstate":
+		modelstr=actionparams["modelstr"]
+		paramtable=mo.get_parameters(modelstr)
+		modelnotes=mo.get_notes(modelstr)
+		return {"plot":None,"data":paramtable,"content":modelnotes,"modelstr":None}
 	elif action=="update":
 		if len(actionparams)==0:
 			return {"plot":None,"data":None,"content":None,"modelstr":None}
@@ -115,11 +121,6 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 	elif action=="plot":
 		print(f"in fo takeaction{actionparams}")
 		return {"plot":actionparams,"data":None,"content":None,"modelstr":None}
-	elif action=="showstate":
-		modelstr=actionparams["modelstr"]
-		paramtable=mo.get_parameters(modelstr)
-		modelnotes=mo.get_notes(modelstr)
-		return {"plot":None,"data":paramtable,"content":modelnotes,"modelstr":None}
 	elif action in ["note","section"]:
 		return {"plot":None,"data":None,"content":actionparams["text"],"modelstr":None}
 	elif action=="find":
@@ -369,6 +370,20 @@ def parseuserinput(userinput:str,species_dict=None):
 	elif action=="simulate":
 		outputtemplate={'dose_species': None, 'dose': 0, 'interval': 0, 'simulationtime': 0}
 		actionparams=parse_simulate_command(userinput,outputtemplate)
+	elif action=="showstate":
+		reqstatenum=1
+		try:
+			reqstatenum=extract_int(userinput)
+		except:
+			print("statenum not provided. Defaulting to 1")
+		actionparams={"statenum":reqstatenum,"modelstr":None,"msg":None}
+	elif action=="selectstate":
+		newstatenum=1
+		try:
+			newstatenum=extract_int(userinput)
+		except:
+			print("statenum not provided. Defaulting to 1")
+		actionparams={"newstatenum":newstatenum,"msg":None}
 	else:
 		actionparams={}
 		for w in userwords:
