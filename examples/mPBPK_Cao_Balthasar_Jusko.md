@@ -7,8 +7,8 @@
 	* `d[CLymph]/dt=(0.33*L*(1-sigLymph)*[CTight]+0.67*L*(1-sigLymph)*[CLeaky]-[CLymph]*L)/VLymph`
 
 	CPlasma,CTight,CLeaky,CLymph are concentrations of the drug in Plasma, Tight, Leaky, and Lymph compartments
-	VTight=0.65*ISF*Kp
-	VLeaky=0.35*ISF*Kp
+	VTight=0.65xISFxKp
+	VLeaky=0.35xISFxKp
 	VLymph=VPlasma
 
 	Add units to parameters
@@ -18,14 +18,14 @@
 
 	All species units are mg/l
 
-2.	**Add a note**
-
-    Type `note: Lymph volume is taken to be same as blood volume. Reference: Warren MF. The lymphatic system. Annul Rev Physiol. 1940;2:109–124`
-
-3. **Update Parameters for 7E3 molecule in mouse**
+2. **Update Parameters for 7E3 molecule in mouse**
 	
     Type `update`. Provide following values in the dialog box
 	VPlasma=0.85 ml,VLymph=0.85 ml,L=0.12 ml/h,sigTight=0.95,sigLeaky=0.42,sigLymph=0.2,Kp=0.8,CLp=0.005 ml/h,ISF=4.35 ml
+
+3.	**Add a note**
+
+    Type `note: Lymph volume is taken to be same as blood volume. Reference: Warren MF. The lymphatic system. Annul Rev Physiol. 1940;2:109–124`
 
 4. **Simulate**
 

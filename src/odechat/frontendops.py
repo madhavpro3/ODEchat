@@ -17,9 +17,9 @@ import streamlit as st
 # def parseequations(equations:str):
 #   modelobj=mo.parseequations(equations,"proj name")
 #   return modelobj
+	# "showmodel":[["view","show","list","model"],"show model: show details of the current model"],
 
 ROUTES={"showcontrols":[["view","show","list","controls","control"],"list controls: lists all the controls"],
-	"showmodel":[["view","show","list","model"],"show model: show details of the current model"],
 	"simulate":[["simulate","run","model","dose","days","mpk"],"simulate: Simulates the model with given dose and regimen for the given time"],
 	"update":[["update","change"],"update (parameter/species) to (value): updates the value of parameter or initial value of species"],
 	"plot":[["plot"],"plot: plots xvariable and yvariable from the last simulation result"],
@@ -87,7 +87,6 @@ def findaction(userinput: str):
 			bestscore=curscore
 			bestroute=key
 
-	print(f"found ac={bestroute}")
 	return bestroute
 
 
@@ -102,11 +101,11 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 	elif action=="simulate":
 		simresult=mo.simulate(modelstr,actionparams)
 		return {"plot":None,"data":simresult,"content":None,"modelstr":None}
-	elif action=="showmodel":
-		# show current model parameters
-		paramtable=mo.get_parameters(modelstr)
-		modelnotes=mo.get_notes(modelstr)
-		return {"plot":None,"data":paramtable,"content":modelnotes,"modelstr":None}
+	# elif action=="showmodel":
+	# 	# show current model parameters
+	# 	paramtable=mo.get_parameters(modelstr)
+	# 	modelnotes=mo.get_notes(modelstr)
+	# 	return {"plot":None,"data":paramtable,"content":modelnotes,"modelstr":None}
 	elif action=="showstate":
 		modelstr=actionparams["modelstr"]
 		paramtable=mo.get_parameters(modelstr)
@@ -119,7 +118,6 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 			newmodelstr,newparamtable=mo.update(modelstr,actionparams)
 			return {"plot":None,"data":newparamtable,"content":None,"modelstr":newmodelstr}
 	elif action=="plot":
-		print(f"in fo takeaction{actionparams}")
 		return {"plot":actionparams,"data":None,"content":None,"modelstr":None}
 	elif action in ["note","section"]:
 		return {"plot":None,"data":None,"content":actionparams["text"],"modelstr":None}
@@ -389,7 +387,6 @@ def parseuserinput(userinput:str,species_dict=None):
 		for w in userwords:
 			if len(w.split("="))==2:
 				actionparam,value=w.split("=")
-				print(f"{actionparam} value = {value}")
 				if actionparam in ["dose_species"]:
 					actionparams[actionparam]=value
 				else:

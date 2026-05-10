@@ -170,7 +170,7 @@ def runaction_updatedb(idnum,task,action,actionparams):
 		modelstr=st.session_state["statedb"][st.session_state["curmodelstate"]]
 
 	if action=="showstate":
-		if actionparams["statenum"]>=len(st.session_state["statedb"]):
+		if actionparams["statenum"]>len(st.session_state["statedb"]):
 			st.toast("Please provide a valid statenum")
 			return msg
 		else:
@@ -198,7 +198,6 @@ def runaction_updatedb(idnum,task,action,actionparams):
 
 	if actionresult["plot"] is not None:
 		newid=len(st.session_state["plotdb"])+1 # new row number
-		print(f"in demo runaction: {actionresult["plot"]}")
 		st.session_state["plotdb"].append({"id":newid,"properties":actionresult["plot"]})
 		msg[f"plotid"]=newid
 
@@ -612,7 +611,7 @@ def create_workflow_project():
 
 		workflow=[
 		"show controls",
-		"show model",
+		"showstate 1",
 		"section: Analysis of Novel molecule",
 		f"simulate dose_species=Dc dose=10 interval=21 simulationtime=360",
 		"find ro t=21 dataid=2 time='Time' drug='Dc' target='Tc' complex='D_T_c'",
@@ -655,8 +654,8 @@ def create_workflow_project():
 		# Run Tasks
 		tasks_list=tasks.split("\n")
 		for taskinx,task in enumerate(tasks_list):
+			task=task.lstrip(f"{taskinx+1}. ")
 			action,actionparams=fo.parseuserinput(task)
-
 			msg=runaction_updatedb(3+taskinx,task,action,actionparams)
 			st.session_state["chatdb"].append(msg)
 
@@ -694,7 +693,7 @@ def dialog_create_workflow():
 	curdataid=-1
 	curmodelstate=0
 
-	list_sno,list_task,list_tagmodelstate,list_tagdataid=[1,2],["show controls","show model"],[0,0],[-1,-1]
+	list_sno,list_task,list_tagmodelstate,list_tagdataid=[1,2],["show controls","show state"],[0,0],[-1,-1]
 	cur_editor_df=pd.DataFrame({"Sno":list_sno,"Task Parameters":list_task,"Model State":list_tagmodelstate,"Data Id":list_tagdataid})
 
 	with st.form(key="form_wftasks"):
@@ -774,7 +773,7 @@ def dialog_addequations():
 			st.session_state["statedb"].append(model_io.save_model_to_string(model=updatedmodelobj))
 			st.session_state["curmodelstate"]=len(st.session_state["statedb"])-1
 
-			deftasks=["show controls","show model"]
+			deftasks=["show controls","show state"]
 			for taskinx,task in enumerate(deftasks):
 				action,actionparams=fo.parseuserinput(task)
 				msg=runaction_updatedb(1+taskinx,task,action,actionparams)
@@ -901,7 +900,6 @@ with chat_panel:
 
 			if ac in ["note","section","showcontrols","showmodel","showstate","selectstate"]:
 				ac,actionparams=fo.parseuserinput(userask)
-				print(f"identified action={ac}, acparams={actionparams}")
 				st.session_state["temp_parameters"]["actionparams"]=actionparams
 
 			# Check if the action inputs are complete, if so take action
