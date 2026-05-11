@@ -195,8 +195,6 @@ def calibrate(modelstr:str,calibparameters:dict):
 	concentrationcol=calibparameters["independent"]
 	dosecol=calibparameters["dose"]
 
-	print(calibparameters)
-
 	userdata[concentrationcol]=userdata[concentrationcol]/userdata[dosecol] # normalizing with dose to run pooled fit
 
 	datacol=f'[{calibparameters["objective"]}]'

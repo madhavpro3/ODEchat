@@ -525,7 +525,7 @@ def create_workflow_project():
 
 		workflow=[
 		"section: Data Visualization",
-		"plot dataid=[1] xdata=['Time'] ydata=['Concentration_nM'] plotstyle=['-'] legend=['PK'] title='PK' xlabel='Time' ylabel='Drug Concentration' yscale='linear'",
+		"plot dataid=[1] xdata=['Time'] ydata=['Concentration_nM'] plotstyle=['-'] legend=['PK'] title='PK' xlabel='Time' ylabel='Drug Concentration' yscale='linear' axeslimits=[0,14,0,2500]",
 		"nca dataid=[1] time='Time' concentration='Concentration_nM' dose='Dose_mg'",
 		"note: Assuming the MW=150KDa",
 		f"calibrate dataid=1 time=Time independent=Concentration_nM dose=Dose_mg objective=Drugcc parameters=[V1,V2,CL,Q] bounds=[(1e-3,1),(1e-3,1),(1e-3,1),(1e-3,1)]",
