@@ -3,4 +3,3 @@ copasi-basico==0.86
 scipy
 pandas==2.3.3
 matplotlib
-st-gsheets-connection==0.1.0
