@@ -80,13 +80,12 @@ def updatemsgblock(chatmsg):
 			with st.chat_message("user"):
 				st.markdown(msg["userask"])
 
-			if msg["action"]!="showstate":
-				labels=st.columns(2,width=150,gap=None)
-				with labels[0]:
-					st.badge(f"State: {msg["stateid"]+1}")
-				if msg["dataid"]>-1:
-					with labels[1]:
-						st.badge(f"Data: {msg["dataid"]}")
+			labels=st.columns(2,width=150,gap=None)
+			with labels[0]:
+				st.badge(f"State: {msg['stateid']+1}")
+			if msg["dataid"]>-1:
+				with labels[1]:
+					st.badge(f"Data: {msg['dataid']}")
 
 			# Note: Assuming that rownumber and id are exactly same.
 			if msg["contentid"]>-1:
@@ -131,13 +130,13 @@ def updatemsgblock(chatmsg):
 					if plotproperties["plotstyle"][dinx]=="-":
 						if 'Group' in data.columns:
 							for groupval, group_df in data.groupby("Group"):
-								plt.plot("xdata","ydata",data=group_df,label=f"{plotproperties["legend"][dinx]}_{groupval}")
+								plt.plot("xdata","ydata",data=group_df,label=f"{plotproperties['legend'][dinx]}_{groupval}")
 						else:
 							plt.plot("xdata","ydata",data=data,label=plotproperties["legend"][dinx])
 					elif plotproperties["plotstyle"][dinx]==":":
 						if 'Group' in data.columns:
 							for groupval, group_df in data.groupby("Group"):
-								plt.scatter("xdata","ydata",data=group_df,label=f"{plotproperties["legend"][dinx]}_{groupval}")
+								plt.scatter("xdata","ydata",data=group_df,label=f"{plotproperties['legend'][dinx]}_{groupval}")
 						else:
 							plt.scatter("xdata","ydata",data=data,label=plotproperties["legend"][dinx])
 					else:
@@ -854,7 +853,7 @@ with chat_panel:
 		st.subheader("Welcome to ODEchat!")
 		st.markdown("Please select either a 'Blank Project' or a 'Workflow Project' to continue.")
 	else:
-		st.markdown(f"Current project = {st.session_state["name"]}")
+		st.markdown(f"Current project = {st.session_state['name']}")
 
 	msgblock=st.container(height=500,border=False)
 
@@ -947,7 +946,7 @@ with chat_panel:
 				# For update, actionparams are like [{"name":<paramname>,"new_value":<>}]
 				actionparamstr=" "
 				for paramupdate in st.session_state["temp_parameters"]["chatmsg"]["actionparams"]:
-					actionparamstr+=f"{paramupdate["name"]}={paramupdate["new_value"]} "
+					actionparamstr+=f"{paramupdate['name']}={paramupdate['new_value']} "
 				actionparamstr=actionparamstr.rstrip(" ")
 				st.session_state["temp_parameters"]["chatmsg"]["userask"]+=actionparamstr
 
@@ -957,15 +956,15 @@ with chat_panel:
 				# for inx,curdataid in enumerate(st.session_state["temp_parameters"]["actionparams"]["dataid"]):
 				#     actionparamstr+=f"({curdataid,st.session_state["temp_parameters"]["actionparams"]["xdata"][inx],st.session_state["temp_parameters"]["actionparams"]["ydata"][inx]}) "
 
-				actionparamstr+=f"dataid={st.session_state["temp_parameters"]["actionparams"]["dataid"]} "
-				actionparamstr+=f"xdata={st.session_state["temp_parameters"]["actionparams"]["xdata"]} "
-				actionparamstr+=f"ydata={st.session_state["temp_parameters"]["actionparams"]["ydata"]} "
-				actionparamstr+=f"axeslimits={st.session_state["temp_parameters"]["actionparams"]["axeslimits"]} "
-				actionparamstr+=f"plotstyle={st.session_state["temp_parameters"]["actionparams"]["plotstyle"]} "
-				actionparamstr+=f"legend={st.session_state["temp_parameters"]["actionparams"]["legend"]} "
-				actionparamstr+=f"title={st.session_state["temp_parameters"]["actionparams"]["title"]} "
-				actionparamstr+=f"xlabel={st.session_state["temp_parameters"]["actionparams"]["xlabel"]} "
-				actionparamstr+=f"ylabel={st.session_state["temp_parameters"]["actionparams"]["ylabel"]} "
+				actionparamstr+=f"dataid={st.session_state['temp_parameters']['actionparams']['dataid']} "
+				actionparamstr+=f"xdata={st.session_state['temp_parameters']['actionparams']['xdata']} "
+				actionparamstr+=f"ydata={st.session_state['temp_parameters']['actionparams']['ydata']} "
+				actionparamstr+=f"axeslimits={st.session_state['temp_parameters']['actionparams']['axeslimits']} "
+				actionparamstr+=f"plotstyle={st.session_state['temp_parameters']['actionparams']['plotstyle']} "
+				actionparamstr+=f"legend={st.session_state['temp_parameters']['actionparams']['legend']} "
+				actionparamstr+=f"title={st.session_state['temp_parameters']['actionparams']['title']} "
+				actionparamstr+=f"xlabel={st.session_state['temp_parameters']['actionparams']['xlabel']} "
+				actionparamstr+=f"ylabel={st.session_state['temp_parameters']['actionparams']['ylabel']} "
 
 				# for k,v in st.session_state["temp_parameters"]["actionparams"].items():
 				#     actionparamstr+=f"{k}={v} "
@@ -980,7 +979,7 @@ with chat_panel:
 				for k,v in st.session_state["temp_parameters"]["actionparams"]["parameters"].items():
 					actionparamstr+=f"{k}={v} "
 
-				actionparamstr+=f"observable={st.session_state["temp_parameters"]["actionparams"]["observable"]} "
+				actionparamstr+=f"observable={st.session_state['temp_parameters']['actionparams']['observable']} "
 				for k,v in st.session_state["temp_parameters"]["actionparams"]["simparams"].items():
 					actionparamstr+=f"{k}={v} "
 

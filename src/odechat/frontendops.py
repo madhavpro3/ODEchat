@@ -124,7 +124,7 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 	elif action=="find":
 		metricvalue=find_metric(actionparams["metric"],actionparams["df"],actionparams["t"],
 			{"timespecies":actionparams["time"],"drugspecies":actionparams["drug"],"targetspecies":actionparams["target"],"complexspecies":actionparams["complex"]})
-		ans=f"{actionparams["metric"]} = {metricvalue}"
+		ans=f"{actionparams['metric']} = {metricvalue}"
 		if actionparams["metric"]=="ro":
 			ans+="%"
 		elif actionparams["metric"]=="cmax":
