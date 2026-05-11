@@ -30,7 +30,7 @@
 4. **Simulate**
 
 	7E3 is dosed in Mouse at value of 8mpk. Assuming Mouse WT=20g. So 8mpk would be 0.16mg. Since Plasma Volume = 0.85mL, initial concentration = 0.16x1e3/0.85 mg/L = 188.23 mg/L
-	Type `simulate`. Choose simulation parameters: dose_species=CPlasma, dose=188.23 interval=250 simulationtime=250
+	Type `simulate`. Choose simulation parameters: dose_species=CPlasma, dose=188.23 interval=250 time=250
 
     Add a note on the mouse weight assumption
 	`note: Assuming Mouse WT=20g`
