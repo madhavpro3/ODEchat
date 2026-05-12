@@ -40,9 +40,9 @@ ROUTES={"showcontrols":[["view","show","list","controls","control"],"list contro
 # "runlsa":["parameters":list,"lowvalues":list,"highvalues":list,"observable":str,"dose_species":str,"dose_nmoles":float,"simtime_days":float,"interval_days":float]
 # }
 
-def createproject(name,curprojects):
-	newpid=len(curprojects)+1
-	return do.saveproject(name,newpid,{"chatdb":[],"plotdb":[],"datadb":[],"statedb":[],"contentdb":[]})
+# def createproject(name,curprojects):
+# 	newpid=len(curprojects)+1
+# 	return do.createproject(name,newpid)
 
 
 def loadproject(pid):

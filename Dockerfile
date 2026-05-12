@@ -36,6 +36,7 @@ WORKDIR /installationtesting
 # into this layer.
 RUN --mount=type=cache,target=/root/.cache/pip \
     --mount=type=bind,source=requirements.txt,target=requirements.txt \
+    --mount=type=bind,source=ODEchat_db,target=ODEchat_db \
     python -m pip install -r requirements.txt
 
 #RUN pip3 install -r requirements.txt
