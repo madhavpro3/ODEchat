@@ -1,6 +1,12 @@
 # ODEchat
 
-## ODEchat is an open-source integrated development environment for building and running PK/PD, Quantitative Systems Pharmacology Models
+## ODEchat is an open-source integrated development environment for building and running PK/PD, Quantitative Systems Pharmacology Models. 
+
+### Some of its features 
+* **Track all the model changes** and allows you to go back to a prior version
+* Run the analysis in a chat style window so that you can **trace your results**
+* **Ensures your analysis is reproducible** so you can focus only on the its interpretation
+* Add **in-place documentation** on assumptions and modeling choices so that you cant miss  
 
 A demo version of the tool can be accessed at [Free Streamlit cloud](https://odechat.streamlit.app/)
 
@@ -19,7 +25,7 @@ Following examples are in the examples folder
 
 ***
 
-## Features (v0.1)
+## Capabilities (v0.1)
 * Simulation
 * Plotting
 * Cailbration
