@@ -17,16 +17,13 @@ if "name" not in st.session_state:
 if "id" not in st.session_state: # This is project id not stateid
 	st.session_state["id"]=None
 
-# if "sess_db" not in st.session_state:
-# 	st.session_state["sess_db"]={"projects":[{"name":"Custom Project","id":1,"chatdb":[],"plotdb":[],"datadb":[],"statedb":[],"contentdb":[]},
-# 	{"name":"Workflow_Exploration","id":200,"chatdb":[],"plotdb":[],"datadb":[],"statedb":[],"contentdb":[]},
-# 	{"name":"Workflow_PKVisualization","id":300,"chatdb":[],"plotdb":[],"datadb":[],"statedb":[],"contentdb":[]}],
-# 	"workflows":[]}
-
 datatables=["chatdb","plotdb","datadb","statedb","contentdb"]
 for dtable in datatables:
 	if dtable not in st.session_state:
 		st.session_state[dtable]=[]
+
+if "settings" not in st.session_state:
+	st.session_state["settings"]={"name":"","moleculeMW":150.0}
 
 # Schema for databases
 ## chatdb: id, userask, action, actionparams,plotid,dataid,stateid,contentid
@@ -760,7 +757,14 @@ def dialog_addequations():
 		paramtable_col,speciestable_col=st.columns(2)
 
 		with speciestable_col:
-			speciesvals=st.data_editor(model_species[["name","unit","initial_concentration"]],disabled=["name"])
+			speciesvals=st.data_editor(model_species[["name","unit","initial_concentration"]],disabled=["name"],
+				column_config={
+					"unit": st.column_config.SelectboxColumn(
+						"unit",
+						options=["milligram","milligram/liter","nanomole","nanomole/liter"],
+						required=True
+					),
+				})
 
 		with paramtable_col:
 			paramvals=st.data_editor(model_parameters[['name','unit','initial_value']],disabled=["name"])
@@ -834,9 +838,9 @@ with projects_panel:
 			openproj_btnloc,saveproj_btnloc=st.columns(2)
 			with openproj_btnloc:
 				if st.button(p["name"],type="primary",width="stretch",key=f"btn-loadproj-{p['id']}"):
-					res=fo.loadproject(p["id"])
-					for item in ["name","id","chatdb","plotdb","datadb","statedb","contentdb"]:
-						st.session_state[item]=res[item]
+					fo.loadproject(p["id"])
+					# for item in ["name","id","chatdb","plotdb","datadb","statedb","contentdb","settings"]:
+					# 	st.session_state[item]=res[item]
 						
 					st.session_state["counter"]=0
 					st.session_state["currentprojectsinfo"]=[]
@@ -876,109 +880,129 @@ with chat_panel:
 		st.markdown("Please create a project or a 'Workflow Project' to continue.")
 	else:
 		st.markdown(f"Current project = {st.session_state['name']}")
-
-	msgblock=st.container(height=500,border=False)
-
-	if len(st.session_state["statedb"])>0: # Session has a model state
-		if userask:=st.chat_input(disabled=False,key="chatbox"):
-			st.session_state.counter+=1
-			curid=st.session_state.counter
-			curchatmsg={"id":st.session_state.counter,"userask":userask,"action":None,"actionparams":None,
-				"plotid":-1,"dataid":-1,"stateid":-1,"contentid":-1}
-
-			ac=fo.findaction(userask)
-			if ac==None:
-				st.toast("dont understand")
-
-			if ac in ["note","section","showcontrols","showmodel","showstate","selectstate"]:
-				ac,actionparams=fo.parseuserinput(userask)
-				st.session_state["temp_parameters"]["actionparams"]=actionparams
-
-			# Check if the action inputs are complete, if so take action
-			# else, ask for the inputs
-			# st.session_state["temp_parameters"]={"action":ac}
-			if ac=="simulate":
-				simulate_input_dialog({"dose_species":'',"dose":0,"interval":21,"simulationtime":21})
-			elif ac=="update":
-				updateparameters_dialog()
-			elif ac=="plot":
-				plot_dialog({'dataid': [], 'xdata': [], 'ydata': [], 'legend': [],
-					'plotstyle': [], 'axeslimits': [0,0,0,0], 'title': '', 'xlabel': '', 'ylabel': '', 'yscale': 'linear'})
-			elif ac=="lsa":
-				lsa_dialog()
-
-			curchatmsg["action"]=ac
-			curchatmsg["stateid"]=st.session_state["curmodelstate"]
-			# Could be improved. Right now temp_parameters has actionparam field but this is needed in the main chatmsg records as well,
-			# So its a duplicate in the temp_parameters. Not a big deal but can be improved
-			# curchatmsg["actionparams"]=st.session_state["temp_parameters"]["actionparams"]
-			st.session_state["temp_parameters"]["chatmsg"]=curchatmsg
+		tab_chat,tab_settings=st.tabs(["Analysis","Settings"])
 
 
-		# Run following if the parameters for the action are all available
-		if st.session_state["temp_parameters"]["actionparams"] is not None:
-			actionresult={"plot":None,"data":None,"content":None,"modelstr":None}
+		with tab_chat:
+			msgblock=st.container(height=500,border=False)
 
-			modelstr=st.session_state["statedb"][st.session_state["temp_parameters"]["chatmsg"]["stateid"]]
-			st.session_state["temp_parameters"]["chatmsg"]["actionparams"]=st.session_state["temp_parameters"]["actionparams"]
+			if len(st.session_state["statedb"])>0: # Session has a model state
+				if userask:=st.chat_input(disabled=False,key="chatbox"):
+					st.session_state.counter+=1
+					curid=st.session_state.counter
+					curchatmsg={"id":st.session_state.counter,"userask":userask,"action":None,"actionparams":None,
+						"plotid":-1,"dataid":-1,"stateid":-1,"contentid":-1}
 
-			if st.session_state["temp_parameters"]["chatmsg"]["action"]=="simulate":
-				# For simulate actionparams are like {"Dose":<doseval>,"Simtime:"<simtime>,"dosespecies":<>,"interval":<>}
-				actionparamstr=" "
-				for k,v in st.session_state["temp_parameters"]["actionparams"].items():
-					actionparamstr+=f"{k}={v} "
-				actionparamstr=actionparamstr.rstrip(" ")
-				st.session_state["temp_parameters"]["chatmsg"]["userask"]+=actionparamstr
+					ac=fo.findaction(userask)
+					if ac==None:
+						st.toast("dont understand")
 
-			elif st.session_state["temp_parameters"]["chatmsg"]["action"]=="update":
-				# For update, actionparams are like [{"name":<paramname>,"new_value":<>}]
-				actionparamstr=" "
-				for paramupdate in st.session_state["temp_parameters"]["chatmsg"]["actionparams"]:
-					actionparamstr+=f"{paramupdate['name']}={paramupdate['new_value']} "
-				actionparamstr=actionparamstr.rstrip(" ")
-				st.session_state["temp_parameters"]["chatmsg"]["userask"]+=actionparamstr
+					if ac in ["note","section","showcontrols","showmodel","showstate","selectstate"]:
+						ac,actionparams=fo.parseuserinput(userask)
+						st.session_state["temp_parameters"]["actionparams"]=actionparams
 
-			elif st.session_state["temp_parameters"]["chatmsg"]["action"]=="plot":
-				# For plot, actionparams are plotproperties [{"dataid":[],"plotstyle":[],"xdata":[],"ydata":[]}]
-				actionparamstr="plot "
-				# for inx,curdataid in enumerate(st.session_state["temp_parameters"]["actionparams"]["dataid"]):
-				#     actionparamstr+=f"({curdataid,st.session_state["temp_parameters"]["actionparams"]["xdata"][inx],st.session_state["temp_parameters"]["actionparams"]["ydata"][inx]}) "
+					# Check if the action inputs are complete, if so take action
+					# else, ask for the inputs
+					# st.session_state["temp_parameters"]={"action":ac}
+					if ac=="simulate":
+						simulate_input_dialog({"dose_species":'',"dose":0,"interval":21,"simulationtime":21})
+					elif ac=="update":
+						updateparameters_dialog()
+					elif ac=="plot":
+						plot_dialog({'dataid': [], 'xdata': [], 'ydata': [], 'legend': [],
+							'plotstyle': [], 'axeslimits': [0,0,0,0], 'title': '', 'xlabel': '', 'ylabel': '', 'yscale': 'linear'})
+					elif ac=="lsa":
+						lsa_dialog()
 
-				actionparamstr+=f"dataid={st.session_state['temp_parameters']['actionparams']['dataid']} "
-				actionparamstr+=f"xdata={st.session_state['temp_parameters']['actionparams']['xdata']} "
-				actionparamstr+=f"ydata={st.session_state['temp_parameters']['actionparams']['ydata']} "
-				actionparamstr+=f"axeslimits={st.session_state['temp_parameters']['actionparams']['axeslimits']} "
-				actionparamstr+=f"plotstyle={st.session_state['temp_parameters']['actionparams']['plotstyle']} "
-				actionparamstr+=f"legend={st.session_state['temp_parameters']['actionparams']['legend']} "
-				actionparamstr+=f"title={st.session_state['temp_parameters']['actionparams']['title']} "
-				actionparamstr+=f"xlabel={st.session_state['temp_parameters']['actionparams']['xlabel']} "
-				actionparamstr+=f"ylabel={st.session_state['temp_parameters']['actionparams']['ylabel']} "
-
-				# for k,v in st.session_state["temp_parameters"]["actionparams"].items():
-				#     actionparamstr+=f"{k}={v} "
-
-				actionparamstr=actionparamstr.rstrip(" ")
-				st.session_state["temp_parameters"]["chatmsg"]["userask"]=actionparamstr
-			elif st.session_state["temp_parameters"]["chatmsg"]["action"]=="lsa":
-				actionparamstr="lsa "
-				for k,v in st.session_state["temp_parameters"]["actionparams"]["parameters"].items():
-					actionparamstr+=f"{k}={v} "
-
-				actionparamstr+=f"observable={st.session_state['temp_parameters']['actionparams']['observable']} "
-				for k,v in st.session_state["temp_parameters"]["actionparams"]["simparams"].items():
-					actionparamstr+=f"{k}={v} "
-
-				actionparamstr=actionparamstr.rstrip()
-				st.session_state["temp_parameters"]["chatmsg"]["userask"]=actionparamstr
+					curchatmsg["action"]=ac
+					curchatmsg["stateid"]=st.session_state["curmodelstate"]
+					# Could be improved. Right now temp_parameters has actionparam field but this is needed in the main chatmsg records as well,
+					# So its a duplicate in the temp_parameters. Not a big deal but can be improved
+					# curchatmsg["actionparams"]=st.session_state["temp_parameters"]["actionparams"]
+					st.session_state["temp_parameters"]["chatmsg"]=curchatmsg
 
 
-			msg=runaction_updatedb(len(st.session_state["chatdb"])+1,st.session_state["temp_parameters"]["chatmsg"]["userask"],
-				st.session_state["temp_parameters"]["chatmsg"]["action"],st.session_state["temp_parameters"]["actionparams"])
+				# Run following if the parameters for the action are all available
+				if st.session_state["temp_parameters"]["actionparams"] is not None:
+					actionresult={"plot":None,"data":None,"content":None,"modelstr":None}
 
-			st.session_state["chatdb"].append(msg)
+					modelstr=st.session_state["statedb"][st.session_state["temp_parameters"]["chatmsg"]["stateid"]]
+					st.session_state["temp_parameters"]["chatmsg"]["actionparams"]=st.session_state["temp_parameters"]["actionparams"]
 
-			# resetting temp_parameters
-			st.session_state["temp_parameters"]={"chatmsg":None,"action":None,"actionparams":None}
+					if st.session_state["temp_parameters"]["chatmsg"]["action"]=="simulate":
+						# For simulate actionparams are like {"Dose":<doseval>,"Simtime:"<simtime>,"dosespecies":<>,"interval":<>}
+						actionparamstr=" "
+						for k,v in st.session_state["temp_parameters"]["actionparams"].items():
+							actionparamstr+=f"{k}={v} "
+						actionparamstr=actionparamstr.rstrip(" ")
+						st.session_state["temp_parameters"]["chatmsg"]["userask"]+=actionparamstr
 
-	with msgblock:
-		updatemsgblock(st.session_state["chatdb"])
+					elif st.session_state["temp_parameters"]["chatmsg"]["action"]=="update":
+						# For update, actionparams are like [{"name":<paramname>,"new_value":<>}]
+						actionparamstr=" "
+						for paramupdate in st.session_state["temp_parameters"]["chatmsg"]["actionparams"]:
+							actionparamstr+=f"{paramupdate['name']}={paramupdate['new_value']} "
+						actionparamstr=actionparamstr.rstrip(" ")
+						st.session_state["temp_parameters"]["chatmsg"]["userask"]+=actionparamstr
+
+					elif st.session_state["temp_parameters"]["chatmsg"]["action"]=="plot":
+						# For plot, actionparams are plotproperties [{"dataid":[],"plotstyle":[],"xdata":[],"ydata":[]}]
+						actionparamstr="plot "
+						# for inx,curdataid in enumerate(st.session_state["temp_parameters"]["actionparams"]["dataid"]):
+						#     actionparamstr+=f"({curdataid,st.session_state["temp_parameters"]["actionparams"]["xdata"][inx],st.session_state["temp_parameters"]["actionparams"]["ydata"][inx]}) "
+
+						actionparamstr+=f"dataid={st.session_state['temp_parameters']['actionparams']['dataid']} "
+						actionparamstr+=f"xdata={st.session_state['temp_parameters']['actionparams']['xdata']} "
+						actionparamstr+=f"ydata={st.session_state['temp_parameters']['actionparams']['ydata']} "
+						actionparamstr+=f"axeslimits={st.session_state['temp_parameters']['actionparams']['axeslimits']} "
+						actionparamstr+=f"plotstyle={st.session_state['temp_parameters']['actionparams']['plotstyle']} "
+						actionparamstr+=f"legend={st.session_state['temp_parameters']['actionparams']['legend']} "
+						actionparamstr+=f"title={st.session_state['temp_parameters']['actionparams']['title']} "
+						actionparamstr+=f"xlabel={st.session_state['temp_parameters']['actionparams']['xlabel']} "
+						actionparamstr+=f"ylabel={st.session_state['temp_parameters']['actionparams']['ylabel']} "
+
+						# for k,v in st.session_state["temp_parameters"]["actionparams"].items():
+						#     actionparamstr+=f"{k}={v} "
+
+						actionparamstr=actionparamstr.rstrip(" ")
+						st.session_state["temp_parameters"]["chatmsg"]["userask"]=actionparamstr
+					elif st.session_state["temp_parameters"]["chatmsg"]["action"]=="lsa":
+						actionparamstr="lsa "
+						for k,v in st.session_state["temp_parameters"]["actionparams"]["parameters"].items():
+							actionparamstr+=f"{k}={v} "
+
+						actionparamstr+=f"observable={st.session_state['temp_parameters']['actionparams']['observable']} "
+						for k,v in st.session_state["temp_parameters"]["actionparams"]["simparams"].items():
+							actionparamstr+=f"{k}={v} "
+
+						actionparamstr=actionparamstr.rstrip()
+						st.session_state["temp_parameters"]["chatmsg"]["userask"]=actionparamstr
+
+
+					msg=runaction_updatedb(len(st.session_state["chatdb"])+1,st.session_state["temp_parameters"]["chatmsg"]["userask"],
+						st.session_state["temp_parameters"]["chatmsg"]["action"],st.session_state["temp_parameters"]["actionparams"])
+
+					st.session_state["chatdb"].append(msg)
+
+					# resetting temp_parameters
+					st.session_state["temp_parameters"]={"chatmsg":None,"action":None,"actionparams":None}
+
+			with msgblock:
+				updatemsgblock(st.session_state["chatdb"])
+
+		with tab_settings:
+			if "name" in st.session_state and "settings" in st.session_state:
+				projectname=st.text_input("Projectname",value=st.session_state['name'])
+
+				st.text("Constants")
+				moleculeMW=st.number_input("Molecule MW (KDa)",value=st.session_state["settings"]["moleculeMW"],step=0.01)
+
+				projsettings={"name":projectname,"moleculeMW":moleculeMW}
+
+				if st.button("Save"):
+					if do.save_projectsettings(st.session_state["id"],projsettings):
+						st.session_state["currentprojectsinfo"]=do.getprojectsinfo()
+						print(st.session_state["currentprojectsinfo"])
+						st.toast(f"new name = {projsettings['name']}")
+						st.toast(f"MW={projsettings['moleculeMW']}")
+						st.toast("Project updated!")

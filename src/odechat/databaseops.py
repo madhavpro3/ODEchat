@@ -35,7 +35,7 @@ def createproject(newname,newid):
 		projdata=pickle.load(file)
 
 	projdata.append({"name":newname,"id":newid,"chatdb":[],"plotdb":[],
-		"datadb":[],"statedb":[],"contentdb":[]})
+		"datadb":[],"statedb":[],"contentdb":[],"settings":{"name":newname,"moleculeMW":150.0}})
 
 	with open(DATABASE,"wb") as file:
 		pickle.dump(projdata,file)
@@ -51,8 +51,26 @@ def saveproject(projname,projid,projectdata):
 
 	for proj in allprojdata:
 		if proj["name"]==projname and proj["id"]==projid:
-			for dbname in ["chatdb","plotdb","datadb","statedb","contentdb"]:
+			for dbname in ["chatdb","plotdb","datadb","statedb","contentdb","settings"]:
 				proj[dbname]=projectdata[dbname]
+
+	with open(DATABASE,"wb") as file:
+		pickle.dump(allprojdata,file)
+
+	return True
+
+
+def save_projectsettings(projid,projsettings):
+	st.session_state["name"]=projsettings["name"]
+	st.session_state["moleculeMW"]=projsettings["moleculeMW"]
+
+	with open(DATABASE,"rb") as file:
+		allprojdata=pickle.load(file)
+
+	for proj in allprojdata:
+		if proj["id"]==projid:
+			proj["settings"]=projsettings
+			proj["name"]=projsettings["name"]
 
 	with open(DATABASE,"wb") as file:
 		pickle.dump(allprojdata,file)

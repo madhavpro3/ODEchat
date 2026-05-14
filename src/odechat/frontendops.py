@@ -45,17 +45,27 @@ ROUTES={"showcontrols":[["view","show","list","controls","control"],"list contro
 # 	return do.createproject(name,newpid)
 
 
+# def loadproject(pid):
+# 	projectinfo=do.loadproject(pid)
+# 	sessionstrs=["name","id"]
+# 	sess_vars={}
+# 	for s in sessionstrs:
+# 		sess_vars[s]=projectinfo[s]
+
+# 	datatables=["chatdb","plotdb","datadb","statedb","contentdb"]
+# 	for dtable in datatables:
+# 		sess_vars[dtable]=projectinfo[dtable]
+# 	return sess_vars
+
 def loadproject(pid):
 	projectinfo=do.loadproject(pid)
-	sessionstrs=["name","id"]
-	sess_vars={}
-	for s in sessionstrs:
-		sess_vars[s]=projectinfo[s]
 
-	datatables=["chatdb","plotdb","datadb","statedb","contentdb"]
-	for dtable in datatables:
-		sess_vars[dtable]=projectinfo[dtable]
-	return sess_vars
+	datatables=["name","id","settings","chatdb","plotdb","datadb","statedb","contentdb"]
+	for varname in datatables:
+		st.session_state[varname]=projectinfo[varname]
+
+	return True
+
 
 def extract_int(input:str) -> int:
 	match = re.search(r'\d+',input)
