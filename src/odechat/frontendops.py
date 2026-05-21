@@ -163,12 +163,20 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 
 
 def parse_plot_command(input_str,outputtemplate):
+	# Different forms of input_str: 
+	# 1) plot - no options provided. Open dialog
+	# 2) plot ydata=['species1','species2',...] - set rest of the properties to default
+	# 3) plot simid=[] xdata=[] ydata=[] etc - partial input. rest of the properties set to default
+	# 4) plot ... - complete input
+	# In all the cases. open dialog and get confirmation
+
 	# Remove the 'plot ' prefix if it exists
 	task="plot"
 	content = input_str.strip("plot")
 	content=content.strip()
 
-	# content=content[1]
+	if len(content)==0:
+		return outputtemplate
 
 	# Regex to find: key= followed by either a list [...] or a quoted string '...'
 	# This ensures we capture the full content of lists and strings with spaces

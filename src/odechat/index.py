@@ -348,8 +348,7 @@ def plot_dialog(actionparams):
 			# plot y and x limits
 			# title, x,y labels
 
-			plotproperties=actionparams
-			
+			plotproperties=actionparams	
 
 			# plotdata=st.selectbox("Simulation",options=["Sim "+str(i+1) for i in range(len(st.session_state["datadb"]))])
 			# if st.button("Show axes options"):
@@ -368,8 +367,11 @@ def plot_dialog(actionparams):
 			# else:
 			# 	# plotdata_placeholder=pd.DataFrame({"Simulation":[],
 			# 	# 	"xdata":specieslist[0],"ydata":specieslist[1],"legend":specieslist[1],"style":"-"})
-			plotdata_placeholder=pd.DataFrame({"dataid":[],
-				"xdata":specieslist[0],"ydata":specieslist[1],"legend":specieslist[1],"style":"-"})
+
+			# plotdata_placeholder=pd.DataFrame({"dataid":[],
+			# 	"xdata":specieslist[0],"ydata":specieslist[1],"legend":specieslist[1],"style":"-"})
+			plotdata_placeholder=pd.DataFrame({"dataid":actionparams["dataid"],
+				"xdata":actionparams["xdata"],"ydata":actionparams["ydata"],"legend":actionparams["ydata"],"style":actionparams["plotstyle"]})
 
 			st.session_state["temp_parameters"]["actionparams"]=st.data_editor(
 				plotdata_placeholder,
@@ -909,8 +911,57 @@ with chat_panel:
 					elif ac=="update":
 						updateparameters_dialog()
 					elif ac=="plot":
-						plot_dialog({'dataid': [], 'xdata': [], 'ydata': [], 'legend': [],
-							'plotstyle': [], 'axeslimits': [0,0,0,0], 'title': '', 'xlabel': '', 'ylabel': '', 'yscale': 'linear'})
+						# ToDO Checks
+							# Ensure that a simulation is run before plotting
+							# Ensure that if xdata or ydata is provided - it matches with species in the model
+
+						lastsimulationid=-1
+						for rowinx in range(len(st.session_state["datadb"])-1,-1,-1):
+							if st.session_state["datadb"][rowinx]["action"]=="simulate":
+								lastsimulationid=rowinx+1
+								break
+
+						if lastsimulationid==-1:
+							st.toast("Please run a simulation before plotting")
+						else:
+							ac,actionparams=fo.parseuserinput(userask)
+
+							# if only ydata is provided, fill up others as defaults
+							if len(actionparams["ydata"])>0:
+
+								if len(actionparams["dataid"])==0:
+									# Filling the dataid to the latest entry in datadb
+									actionparams["dataid"]=[lastsimulationid for i in range(len(actionparams["ydata"]))]
+
+								if len(actionparams["xdata"])==0:
+									actionparams["xdata"]=['Time' for i in range(len(actionparams["ydata"]))]
+
+								if len(actionparams["plotstyle"])==0:
+									actionparams["plotstyle"]=['-' for i in range(len(actionparams["ydata"]))]
+
+								print(actionparams)
+								print(st.session_state["datadb"][actionparams["dataid"][0]-1]["data"])
+
+								# st.session_state["datadb"][curdataid-1]["data"][plotproperties["xdata"][inx]]
+
+								if len(actionparams["axeslimits"])==0 or actionparams["axeslimits"]==[0,0,0,0]:
+									actionparams["axeslimits"][0]=min(st.session_state["datadb"][actionparams["dataid"][0]-1]["data"][actionparams["xdata"][0]])
+									actionparams["axeslimits"][1]=max(st.session_state["datadb"][actionparams["dataid"][0]-1]["data"][actionparams["xdata"][0]])
+									actionparams["axeslimits"][2]=min(st.session_state["datadb"][actionparams["dataid"][0]-1]["data"][actionparams["ydata"][0]])
+									actionparams["axeslimits"][3]=max(st.session_state["datadb"][actionparams["dataid"][0]-1]["data"][actionparams["ydata"][0]])
+
+									for datainx,dataid in enumerate(actionparams["dataid"]):
+										actionparams["axeslimits"][0]=min([actionparams["axeslimits"][0],
+											min(st.session_state["datadb"][dataid-1]["data"][actionparams["xdata"][datainx]])])
+										actionparams["axeslimits"][1]=max([actionparams["axeslimits"][1],
+											min(st.session_state["datadb"][dataid-1]["data"][actionparams["xdata"][datainx]])])
+										actionparams["axeslimits"][2]=min([actionparams["axeslimits"][2],
+											min(st.session_state["datadb"][dataid-1]["data"][actionparams["ydata"][datainx]])])
+										actionparams["axeslimits"][3]=max([actionparams["axeslimits"][3],
+											max(st.session_state["datadb"][dataid-1]["data"][actionparams["ydata"][datainx]])])
+
+							plot_dialog(actionparams)
+
 					elif ac=="lsa":
 						lsa_dialog()
 
@@ -1002,7 +1053,4 @@ with chat_panel:
 				if st.button("Save"):
 					if do.save_projectsettings(st.session_state["id"],projsettings):
 						st.session_state["currentprojectsinfo"]=do.getprojectsinfo()
-						print(st.session_state["currentprojectsinfo"])
-						st.toast(f"new name = {projsettings['name']}")
-						st.toast(f"MW={projsettings['moleculeMW']}")
 						st.toast("Project updated!")
