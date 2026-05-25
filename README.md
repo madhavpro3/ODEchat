@@ -31,4 +31,4 @@ Following examples are in the examples folder
 * Cailbration
 * Updating parameters -> Creates a new model state
 * Re-visiting prior model states
-* Saving the analysis as a chat
+* Save the project analysis as a chat. This can be re-loaded and continued where it is left off.
