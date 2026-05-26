@@ -2,55 +2,90 @@ import pickle
 import os
 import streamlit as st
 
-# DATABASE="ODEchat_db.pkl"
-def getprojects():
-	data=st.session_state["sess_db"]["projects"]
-	projects=[]
-	if data is not None:
+DATABASE="ODEchat_db/DB.pkl"
+def getprojectsinfo():
+	# data=st.session_state["sess_db"]["projects"]
+	# projects=[]
+	# if data is not None:
+	# 	for project in data:
+	# 		projects.append({"name":project["name"],"id":project["id"]})
+
+	# return projects
+
+	if os.path.isfile(DATABASE):
+		with open(DATABASE,"rb") as file:
+			data=pickle.load(file)
+
+		projects=[]
 		for project in data:
 			projects.append({"name":project["name"],"id":project["id"]})
 
-	return projects
+		return projects
+	else:
+		with open(DATABASE,"wb") as file:
+			pickle.dump([],file)
 
-	# if os.path.isfile(f"db\\{DATABASE}"):
-	# 	with open(f"db\\{DATABASE}","rb") as file:
-	# 		data=pickle.load(file
+		return ""
 
-		# projects=[]
-		# for project in data:
-		# 	projects.append({"name":project["name"],"id":project["id"]})
-
-		# return projects
-	# else:
-	# 	with open(f"db\\{DATABASE}","wb") as file:
-	# 		pickle.dump([],file)
-
-	# 	return ""
-
-def saveproject(newname,newid,projectdata):
-	st.session_state["sess_db"]["projects"].append({"name":newname,"id":newid,"chatdb":projectdata["chatdb"],"plotdb":projectdata["plotdb"],
-		"datadb":projectdata["datadb"],"statedb":projectdata["statedb"],"contentdb":projectdata["contentdb"]})
-
-	# with open(f"db\\{DATABASE}","rb") as file:
-	# 	projdata=pickle.load(file)
-
-	# projdata.append({"name":newname,"id":newid,"chatdb":projectdata["chatdb"],"plotdb":projectdata["plotdb"],
+def createproject(newname,newid):
+	# st.session_state["sess_db"]["projects"].append({"name":newname,"id":newid,"chatdb":projectdata["chatdb"],"plotdb":projectdata["plotdb"],
 	# 	"datadb":projectdata["datadb"],"statedb":projectdata["statedb"],"contentdb":projectdata["contentdb"]})
 
-	# with open(f"db\\{DATABASE}","wb") as file:
-	# 	pickle.dump(projdata,file)
+	with open(DATABASE,"rb") as file:
+		projdata=pickle.load(file)
+
+	projdata.append({"name":newname,"id":newid,"chatdb":[],"plotdb":[],
+		"datadb":[],"statedb":[],"contentdb":[],"settings":{"name":newname,"moleculeMW":150.0}})
+
+	with open(DATABASE,"wb") as file:
+		pickle.dump(projdata,file)
 
 	return True
 
-def updateproject(sess_state):
-	projdata=st.session_state["sess_db"]["projects"]
+def saveproject(projname,projid,projectdata):
+	# st.session_state["sess_db"]["projects"].append({"name":newname,"id":newid,"chatdb":projectdata["chatdb"],"plotdb":projectdata["plotdb"],
+	# 	"datadb":projectdata["datadb"],"statedb":projectdata["statedb"],"contentdb":projectdata["contentdb"]})
 
-	for proj in projdata:
-		if proj["id"]==sess_state["id"]:
-			for item in ["chatdb","plotdb","datadb","statedb","contentdb"]:
-				proj[item]=sess_state[item]
+	with open(DATABASE,"rb") as file:
+		allprojdata=pickle.load(file)
+
+	for proj in allprojdata:
+		if proj["name"]==projname and proj["id"]==projid:
+			for dbname in ["chatdb","plotdb","datadb","statedb","contentdb","settings"]:
+				proj[dbname]=projectdata[dbname]
+
+	with open(DATABASE,"wb") as file:
+		pickle.dump(allprojdata,file)
+
+	return True
+
+
+def save_projectsettings(projid,projsettings):
+	st.session_state["name"]=projsettings["name"]
+	st.session_state["moleculeMW"]=projsettings["moleculeMW"]
+
+	with open(DATABASE,"rb") as file:
+		allprojdata=pickle.load(file)
+
+	for proj in allprojdata:
+		if proj["id"]==projid:
+			proj["settings"]=projsettings
+			proj["name"]=projsettings["name"]
+
+	with open(DATABASE,"wb") as file:
+		pickle.dump(allprojdata,file)
+
+	return True
+
+# def updateallprojects(sess_state):
+	# projdata=st.session_state["sess_db"]["projects"]
+
+	# for proj in projdata:
+	# 	if proj["id"]==sess_state["id"]:
+	# 		for item in ["chatdb","plotdb","datadb","statedb","contentdb"]:
+	# 			proj[item]=sess_state[item]
 	
-	st.session_state["sess_db"]["projects"]=projdata
+	# st.session_state["sess_db"]["projects"]=projdata
 
 	# with open(f"db\\{DATABASE}","rb") as file:
 	# 	projdata=pickle.load(file)
@@ -65,17 +100,19 @@ def updateproject(sess_state):
 	# with open(f"db\\{DATABASE}","wb") as file:
 	# 	pickle.dump(projdata,file)
 
-	return True
-
+	# return True
 
 
 def loadproject(pid):
-	# with open(f"db\\{DATABASE}", 'rb') as file:
-	# 	data = pickle.load(file)
+	db="ODEchat_db"
+	with open(DATABASE, 'rb') as file:
+		data = pickle.load(file)
 
-	# print(data)
-	# print(f"PID={pid}")
-	data=st.session_state["sess_db"]["projects"]
+	# data=st.session_state["sess_db"]["projects"]
+
+	# for project in data:
+	# 	if project["id"]==pid:
+	# 		return project
 
 	for project in data:
 		if project["id"]==pid:
@@ -101,26 +138,18 @@ def loadproject(pid):
 
 #     #     return ""
 
-# def loadproject(pid):
-# 	db="ODEchat_db"
-# 	with open(f"db\\{db}.pkl", 'rb') as file:
-# 		data = pickle.load(file)
 
-# 	for project in data:
-# 		if project["id"]==pid:
-# 			return project
 
-# def saveproject(name,pid,projectdata):
-#     db="ODEchat_db"
+# def createproject(name,pid,projectdata):
 
-#     # with open(f"db\\{db}.pkl", 'rb') as file:
+#     # with open(DATABASE, 'rb') as file:
 #     #     curprojects = pickle.load(file)
 
 #     curprojects={"name":name,"id":pid,"chat":projectdata["chat"],
 #     	"plot":projectdata["plot"],"data":projectdata["data"],"state":projectdata["state"],
 #     	"content":projectdata["content"]}
 
-#     with open(f"db\\{db}.pkl", "wb") as f:
+#     with open(DATABASE, "wb") as f:
 #     	pickle.dump(curprojects, f)
 
 #     print(f"saving projects with {curprojects}")

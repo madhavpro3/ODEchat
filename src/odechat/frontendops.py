@@ -40,22 +40,32 @@ ROUTES={"showcontrols":[["view","show","list","controls","control"],"list contro
 # "runlsa":["parameters":list,"lowvalues":list,"highvalues":list,"observable":str,"dose_species":str,"dose_nmoles":float,"simtime_days":float,"interval_days":float]
 # }
 
-def createproject(name,curprojects):
-	newpid=len(curprojects)+1
-	return do.saveproject(name,newpid,{"chatdb":[],"plotdb":[],"datadb":[],"statedb":[],"contentdb":[]})
+# def createproject(name,curprojects):
+# 	newpid=len(curprojects)+1
+# 	return do.createproject(name,newpid)
 
+
+# def loadproject(pid):
+# 	projectinfo=do.loadproject(pid)
+# 	sessionstrs=["name","id"]
+# 	sess_vars={}
+# 	for s in sessionstrs:
+# 		sess_vars[s]=projectinfo[s]
+
+# 	datatables=["chatdb","plotdb","datadb","statedb","contentdb"]
+# 	for dtable in datatables:
+# 		sess_vars[dtable]=projectinfo[dtable]
+# 	return sess_vars
 
 def loadproject(pid):
 	projectinfo=do.loadproject(pid)
-	sessionstrs=["name","id"]
-	sess_vars={}
-	for s in sessionstrs:
-		sess_vars[s]=projectinfo[s]
 
-	datatables=["chatdb","plotdb","datadb","statedb","contentdb"]
-	for dtable in datatables:
-		sess_vars[dtable]=projectinfo[dtable]
-	return sess_vars
+	datatables=["name","id","settings","chatdb","plotdb","datadb","statedb","contentdb"]
+	for varname in datatables:
+		st.session_state[varname]=projectinfo[varname]
+
+	return True
+
 
 def extract_int(input:str) -> int:
 	match = re.search(r'\d+',input)
@@ -153,12 +163,20 @@ def takeaction(action:str,actionparams,modelstr:str): # actionparams can be a di
 
 
 def parse_plot_command(input_str,outputtemplate):
+	# Different forms of input_str: 
+	# 1) plot - no options provided. Open dialog
+	# 2) plot ydata=['species1','species2',...] - set rest of the properties to default
+	# 3) plot simid=[] xdata=[] ydata=[] etc - partial input. rest of the properties set to default
+	# 4) plot ... - complete input
+	# In all the cases. open dialog and get confirmation
+
 	# Remove the 'plot ' prefix if it exists
 	task="plot"
 	content = input_str.strip("plot")
 	content=content.strip()
 
-	# content=content[1]
+	if len(content)==0:
+		return outputtemplate
 
 	# Regex to find: key= followed by either a list [...] or a quoted string '...'
 	# This ensures we capture the full content of lists and strings with spaces
