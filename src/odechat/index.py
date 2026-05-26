@@ -666,69 +666,133 @@ def create_workflow_project():
 # def addtask(newtask):
 #     st.session_state["wftasks"].append(newtask)
 
-@st.dialog("Workflow",width="large")
-def dialog_create_workflow():
+# @st.dialog("Workflow",width="large")
+# def dialog_create_workflow():
 
-	# Ask for model equations
-	# Add tasks
-	# Display tasks with tags as needed
-	sampleeq="""d[Dc]/dt=-(CL/Vc)*[Dc] - (Q/Vc)*[Dc] + (Q/Vp)*[Dp]
-	d[Dp]/dt= (Q/Vc)*[Dc]-(Q/Vp)*[Dp]"""
-	st.text_area("Provide model equations",sampleeq)
-	st.markdown("**Note:**")
-	st.text("1. Equations should be written as d[species1]/dt = p1*[species1] - p2*[species2]...\n2. Separate equations with a new line")
-	# st.text("2. Separate equations with a new line")
+# 	# Ask for model equations
+# 	# Add tasks
+# 	# Display tasks with tags as needed
+# 	sampleeq="""d[Dc]/dt=-(CL/Vc)*[Dc] - (Q/Vc)*[Dc] + (Q/Vp)*[Dp]
+# 	d[Dp]/dt= (Q/Vc)*[Dc]-(Q/Vp)*[Dp]"""
+# 	st.text_area("Provide model equations",sampleeq)
+# 	st.markdown("**Note:**")
+# 	st.text("1. Equations should be written as d[species1]/dt = p1*[species1] - p2*[species2]...\n2. Separate equations with a new line")
+# 	# st.text("2. Separate equations with a new line")
 
-	task_options=["Simulate","Plot","Calibrate","Local Sensitivity Analysis","Non-compartmental Analysis","Find a metric","Upload file"]
-	# selectedtasks=st.multiselect("Task",options=task_options)
+# 	task_options=["Simulate","Plot","Calibrate","Local Sensitivity Analysis","Non-compartmental Analysis","Find a metric","Upload file"]
+# 	# selectedtasks=st.multiselect("Task",options=task_options)
 
-	# task_parameters={
-	# "Simulate":"simulate dose_species='<speciesname>' dose=10 interval_days=21 simtime_days=21",
-	# "Plot":"plot dataid=[<>] xdata=['<>'] ydata=['<>'] legend=['<>'] plotstyle=['-'] axeslimits=[0, 21, 0, 100] title='' xlabel='' ylabel='' yscale='linear'",
-	# "Local Sensitivity Analysis":"lsa parameters=['<parameter1>','<parameter2>'] lowvalues=[0,0] highvalues=[1,1] observable='<speciesname>' dose_species='<speciesname>' dose_nmoles=<dosevalue> simtime_days=21 interval_days=21",
-	# "Non-compartmental Analysis":"nca dataid=[1] time='<Time column>' concentration='<concentration column>' dose='<dose column>'"}
+# 	# task_parameters={
+# 	# "Simulate":"simulate dose_species='<speciesname>' dose=10 interval_days=21 simtime_days=21",
+# 	# "Plot":"plot dataid=[<>] xdata=['<>'] ydata=['<>'] legend=['<>'] plotstyle=['-'] axeslimits=[0, 21, 0, 100] title='' xlabel='' ylabel='' yscale='linear'",
+# 	# "Local Sensitivity Analysis":"lsa parameters=['<parameter1>','<parameter2>'] lowvalues=[0,0] highvalues=[1,1] observable='<speciesname>' dose_species='<speciesname>' dose_nmoles=<dosevalue> simtime_days=21 interval_days=21",
+# 	# "Non-compartmental Analysis":"nca dataid=[1] time='<Time column>' concentration='<concentration column>' dose='<dose column>'"}
 
-	curdataid=-1
-	curmodelstate=0
+# 	curdataid=-1
+# 	curmodelstate=0
 
-	list_sno,list_task,list_tagmodelstate,list_tagdataid=[1,2],["show controls","show state"],[0,0],[-1,-1]
-	cur_editor_df=pd.DataFrame({"Sno":list_sno,"Task Parameters":list_task,"Model State":list_tagmodelstate,"Data Id":list_tagdataid})
+# 	list_sno,list_task,list_tagmodelstate,list_tagdataid=[1,2],["show controls","show state"],[0,0],[-1,-1]
+# 	cur_editor_df=pd.DataFrame({"Sno":list_sno,"Task Parameters":list_task,"Model State":list_tagmodelstate,"Data Id":list_tagdataid})
 
-	with st.form(key="form_wftasks"):
-		tasktype,addbtn=st.columns([0.7,0.3],vertical_alignment="bottom")
-		with tasktype:
-			newtask=st.selectbox("Task",options=task_options,label_visibility="collapsed")
-		with addbtn:
-			if st.form_submit_button("Add Task"):
-				st.session_state["wftasks"].append(newtask)
+# 	with st.form(key="form_wftasks"):
+# 		tasktype,addbtn=st.columns([0.7,0.3],vertical_alignment="bottom")
+# 		with tasktype:
+# 			newtask=st.selectbox("Task",options=task_options,label_visibility="collapsed")
+# 		with addbtn:
+# 			if st.form_submit_button("Add Task"):
+# 				st.session_state["wftasks"].append(newtask)
 
-	for taskinx,task in enumerate(st.session_state["wftasks"]):
-		list_sno.append(len(list_task)+1)
-		list_task.append(task_parameters[task])
+# 	for taskinx,task in enumerate(st.session_state["wftasks"]):
+# 		list_sno.append(len(list_task)+1)
+# 		list_task.append(task_parameters[task])
 
-		if task in ["Simulate"]:
-			if curdataid==-1:
-				curdataid=1
-			else:
-				curdataid+=1
+# 		if task in ["Simulate"]:
+# 			if curdataid==-1:
+# 				curdataid=1
+# 			else:
+# 				curdataid+=1
 
-		if task in ["Update Parameters"]:
-			curmodelstate+=1
+# 		if task in ["Update Parameters"]:
+# 			curmodelstate+=1
 
-		list_tagmodelstate.append(curmodelstate)
-		list_tagdataid.append(curdataid)
+# 		list_tagmodelstate.append(curmodelstate)
+# 		list_tagdataid.append(curdataid)
 
-		cur_editor_df=pd.DataFrame({"Sno":list_sno,"Task Parameters":list_task,"Model State":list_tagmodelstate,"Data Id":list_tagdataid})
+# 		cur_editor_df=pd.DataFrame({"Sno":list_sno,"Task Parameters":list_task,"Model State":list_tagmodelstate,"Data Id":list_tagdataid})
 
-	st.data_editor(cur_editor_df,disabled=["Sno","Model State","Data Id"],column_config={"Task Parameters":st.column_config.TextColumn()})
+# 	st.data_editor(cur_editor_df,disabled=["Sno","Model State","Data Id"],column_config={"Task Parameters":st.column_config.TextColumn()})
 
-	if st.button("Save Workflow"):
-		# Verify that equations are readable with species and parameters
-		# Verify that all task parameters are provided 
+# 	if st.button("Save Workflow"):
+# 		# Verify that equations are readable with species and parameters
+# 		# Verify that all task parameters are provided 
 
 
-		st.session_state["wftasks"]=[] # Initializing to empty
-		st.toast("WF created yaay!")
+# 		st.session_state["wftasks"]=[] # Initializing to empty
+# 		st.toast("WF created yaay!")
+
+@st.dialog("Workflow2",width="large")
+def dialog_run_workflow(md_text):
+
+	resetsession()
+	st.session_state["name"]="WFfromMD"
+
+	st.subheader("Model equations")
+	modeleq=("\n").join(md_text["Equations"])
+	repeatedassignments=fo.parse_repassignemnts(md_text)
+	# repeatedassignments={"Drugcc":"[Drugca]/Values[V1].InitialValue"}
+
+	st.text(modeleq)
+	curprojects=st.session_state["currentprojectsinfo"]
+	modelobj=mo.parseequations(modeleq,f"proj {len(curprojects)+1}",repeatedassignments)
+
+	# for filereqinx,filereq in enumerate(md_text["Files"]):
+	uploadfile_properties=fo.parse_files(md_text)
+	for filereq in uploadfile_properties:
+		NHPPK_file=st.file_uploader("PK",key=filereq["name"],type=filereq["format"])
+		st.text(f"Note: Ensure the data contains {','.join(filereq['contains'])} columns")
+
+	workflow=md_text["Tasks"]
+	workflow_listed=[f"{i+1}. {wf}" for i,wf in enumerate(workflow)]
+	workflow_editable=("\n").join(workflow_listed)
+	tasks=st.text_area(label="Tasks",value=workflow_editable,height="content")
+
+	if st.button("Run"):
+		st.toast("Yaay!")
+
+
+	progressbar=st.empty()
+
+	if st.button("Create",type="primary"):
+		df_NHPPK=pd.DataFrame({
+				'Group': [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3],
+				 'Dose_mg': [3,3,3,3,3,3,3,9,9,9,9,9,9,9,30,30,30,30,30,30,30],
+				 'Time': [0.0, 0.3, 0.9, 2.9, 3.9, 6.8, 14.1, 0.1, 0.5, 0.9, 2.9, 4.1, 6.9, 14.0, 0.2, 0.4, 0.9, 2.9, 4.0, 7.1, 14.0],
+				 'ADCcc_ugml': [42.2, 27.7, 15.6, 5.9, 4.7, 2.1, 0.6, 87.7, 57.7, 42.1, 18.2, 15.5, 6.2, 1.8, 360.3, 249.7, 164.2, 69.0, 50.3, 37.5, 11.7],
+				 'Concentration_nM': [275.7, 181.3, 101.8, 38.5, 30.4, 13.8, 4.0, 573.4, 377.0, 275.2, 118.7, 101.3, 40.3, 11.6, 2355.0, 1632.2, 1073.0, 450.9, 328.7, 245.2, 76.6]
+				 })
+		runaction_updatedb(1,f"upload Cyno_PK_demo.csv","upload",{"data":df_NHPPK})
+		# else:
+		# 	df_NHPPK=pd.read_csv(NHPPK_file)
+		# 	runaction_updatedb(1,f"upload {NHPPK_file}","upload",{"data":df_NHPPK})
+
+		modelstr=model_io.save_model_to_string(model=modelobj)
+		st.session_state["statedb"].append(modelstr)
+		st.session_state["curmodelstate"]=len(st.session_state["statedb"])-1
+
+		# Run Tasks
+		tasks_list=tasks.split("\n")
+		for taskinx,task in enumerate(tasks_list):
+			task=task.lstrip(f"{taskinx+1}. ")
+			action,actionparams=fo.parseuserinput(task)
+			msg=runaction_updatedb(3+taskinx,task,action,actionparams)
+			st.session_state["chatdb"].append(msg)
+
+			if taskinx%3==0:
+				progress_percent=math.floor(100*(taskinx+1)/len(tasks_list))
+				progressbar.progress(progress_percent,text=f"Progress: {progress_percent}%")
+
+		st.rerun()
+
 
 @st.dialog("Equations",width="large")
 def dialog_addequations():
@@ -797,8 +861,10 @@ st.set_page_config(page_title="ODEchat",layout="wide")
 user_greet,user_logout,emp=st.columns([0.2,0.2,0.6])
 with user_greet:
 	st.text("Hi, User")
-# with user_logout:
-# 	st.button("Logout")
+
+if st.button("Read md file"):
+	result = fo.extract_sections_from_file("src/odechat/workflows/PKtranslation.md")
+	dialog_run_workflow(result)
 
 projects_panel,chat_panel=st.columns([0.3,0.7],border=True)
 
