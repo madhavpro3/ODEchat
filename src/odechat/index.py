@@ -809,10 +809,6 @@ with projects_panel:
 
 	curprojects=st.session_state["currentprojectsinfo"]
 
-	if st.button("Test dir"):
-		nhpdf=pd.read_csv("ODEchat_db/Cyno_PK_A1mcMMAF_estdemo.csv")
-		st.toast(nhpdf.size)
-
 	btnloc_createproject,btnloc_createwf=st.columns(2)
 	with btnloc_createproject:
 		if st.button("Create Project",on_click=do.createproject,

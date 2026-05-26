@@ -34,28 +34,13 @@ ROUTES={"showcontrols":[["view","show","list","controls","control"],"list contro
 	"scale":[["scale"],"scale parameters=['<>'] method='' factors=[<>]: Scales model parameters using the factors"]
 }
 
-# TASKPARAMETERS={"showstate":["statenum":int],
-# "simulate":["dose_species":str,"dose_nmoles":float,"interval_days":float,"simtime_days":float],
-# "plot":["dataid":list,"xdata":list,"ydata":list,"legend":list,"plotstyle":list,"axeslimits":list,"title":str,"xlabel":str,"ylabel":str,"yscale":str],
-# "runlsa":["parameters":list,"lowvalues":list,"highvalues":list,"observable":str,"dose_species":str,"dose_nmoles":float,"simtime_days":float,"interval_days":float]
-# }
+# ------------------------ Functions for demo ----------------------------------
+def demo_loadproject(pid):
+	projectinfo=do.demo_loadproject(pid)
 
-# def createproject(name,curprojects):
-# 	newpid=len(curprojects)+1
-# 	return do.createproject(name,newpid)
+	return projectinfo
 
-
-# def loadproject(pid):
-# 	projectinfo=do.loadproject(pid)
-# 	sessionstrs=["name","id"]
-# 	sess_vars={}
-# 	for s in sessionstrs:
-# 		sess_vars[s]=projectinfo[s]
-
-# 	datatables=["chatdb","plotdb","datadb","statedb","contentdb"]
-# 	for dtable in datatables:
-# 		sess_vars[dtable]=projectinfo[dtable]
-# 	return sess_vars
+# ------------------------ End of Functions for demo ---------------------------
 
 def loadproject(pid):
 	projectinfo=do.loadproject(pid)
@@ -65,6 +50,7 @@ def loadproject(pid):
 		st.session_state[varname]=projectinfo[varname]
 
 	return True
+
 
 
 def extract_int(input:str) -> int:

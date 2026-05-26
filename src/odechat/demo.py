@@ -800,7 +800,7 @@ projects_panel,chat_panel=st.columns([0.3,0.7],border=True)
 with projects_panel:
 	# getprojects from the database and list them
 	# when a project is selected, update the session variables
-	st.session_state["currentprojects"]=do.getprojects()
+	st.session_state["currentprojects"]=do.demo_getprojects()
 
 	curprojects=st.session_state["currentprojects"]
 
@@ -817,7 +817,7 @@ with projects_panel:
 	with st.container(height=200,border=False):
 		# for pinx,p in enumerate(st.session_state["currentprojects"]):
 		if st.button("Blank Project",type="primary",width="stretch"):
-			res=fo.loadproject(1)
+			res=fo.demo_loadproject(1)
 			for item in ["name","id","chatdb","plotdb","datadb","statedb","contentdb"]:
 				st.session_state[item]=res[item]
 				
