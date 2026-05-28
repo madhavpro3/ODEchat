@@ -557,7 +557,11 @@ def create_workflow_project():
 		# Select benchmark
 		# Show model equations (uneditable)
 		# Show workflow and Parameters - Parameter values for benchmark are updated when changed selection
-		benchmark=st.selectbox("Benchmark",options=["Enhertu (HER2-DXD)","Keytruda (PD1)"])
+
+		bmparams=pd.read_csv("src/referencemolecules/pkparams.csv")
+		benchmark=st.selectbox("Benchmark",options=bmparams["Name"])
+		bmparams=bmparams.set_index("Name")
+		# benchmark=st.selectbox("Benchmark",options=["Enhertu (HER2-DXD)","Keytruda (PD1)"])
 
 		PKPDeq="""d[Dose]/dt= - Ka*[Dose] \nd[Dc]/dt = Ka*[Dose] - (CL_D/Vc)*[Dc] - Kon*[Dc]*[Tc] + Koff*[D_T_c] - (Q_D/Vc)*[Dc] + (Q_D/Vp)*[Dp] \nd[Tc]/dt = Tsyn - Tdeg*[Tc] - Kon*([Dc]/Vc)*[Tc] + Koff*[D_T_c] - (Q_T/Vc)*[Tc] + (Q_T/Vp)*[Tp] \nd[D_T_c]/dt = Kon*([Dc]/Vc)*[Tc] - Koff*[D_T_c] - (CL_D_T/Vc)*[D_T_c] - (Q_D_T/Vc)*[D_T_c] + (Q_D_T/Vp)*[D_T_p] \nd[Dp]/dt = (Q_D/Vc)*[Dc] - (Q_D/Vp)*[Dp] \nd[Tp]/dt = (Q_T/Vc)*[Tc] - (Q_T/Vp)*[Tp] \nd[D_T_p]/dt = (Q_D_T/Vc)*[D_T_c] - (Q_D_T/Vp)*[D_T_p]"""
 		# for eq in PKPDeq.split("\n"):
@@ -600,12 +604,14 @@ def create_workflow_project():
 		with loc_params:
 			st.data_editor(model_parameters[['name','unit','initial_value','notes']])
 
-		if benchmark=="Enhertu (HER2-DXD)":
-			bm_Vc,bm_Vp,bm_Q,bm_CL,bm_Kon,bm_Koff=[2.77,5.16,0.199,0.421,1,0.048]
-			bm_ref="doi:10.1002/cpt.2096"
-		elif benchmark=="Keytruda (PD1)":
-			bm_Vc,bm_Vp,bm_Q,bm_CL,bm_Kon,bm_Koff=[1,2,3,4,5,6]
-			bm_ref="doi:10.1002/cpt.2096"
+		bm_Vc,bm_Vp,bm_CL,bm_Q,bm_ref=bmparams.loc[benchmark,"V1_L":"source"]
+		bm_Kon,bm_Koff=0.421,0.048
+		# if benchmark=="Enhertu (HER2-DXD)":
+		# 	bm_Vc,bm_Vp,bm_Q,bm_CL,bm_Kon,bm_Koff=[2.77,5.16,0.199,0.421,1,0.048]
+		# 	bm_ref="doi:10.1002/cpt.2096"
+		# elif benchmark=="Keytruda (PD1)":
+		# 	bm_Vc,bm_Vp,bm_Q,bm_CL,bm_Kon,bm_Koff=[1,2,3,4,5,6]
+		# 	bm_ref="doi:10.1002/cpt.2096"
 
 		workflow=[
 		"show controls",
@@ -774,7 +780,7 @@ def dialog_run_workflow(md_text):
 			# 		 })
 			# runaction_updatedb(1,f"upload Cyno_PK_demo.csv","upload",{"data":df_NHPPK})
 			# else:
-			
+
 			for fileinx,filereq in enumerate(uploadfile_properties):		
 				df_f=pd.read_csv(FILES[fileinx])
 				msg=runaction_updatedb(1,f"upload {filereq['name']}","upload",{"data":df_f})
