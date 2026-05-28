@@ -516,16 +516,25 @@ def _parse_kv(item):
     """
     Parse one 'key=value key=value ...' item into a dict.
  
-    Values may be a double-quoted string ("foo"), a brace set
-    ({'a', 'b'}), or a bare token. Quoted strings come back as str,
-    brace sets come back as a Python set, everything else as str.
+    Values may be a double-quoted string ("foo"), a bracket list
+    (['a', 'b']), a brace set ({'a', 'b'}), or a bare token.
+    Quoted strings come back as str, bracket lists come back as a
+    Python list (order preserved), brace sets as a set, everything
+    else as str.
     """
-    # key= followed by either "..." , {...} , or a run of non-space chars.
-    pair_re = re.compile(r'(\w+)=("[^"]*"|\{[^}]*\}|\S+)')
+    # key= followed by "..." , [...] , {...} , or a run of non-space chars.
+    pair_re = re.compile(r'(\w+)=("[^"]*"|\[[^\]]*\]|\{[^}]*\}|\S+)')
     out = {}
     for key, raw in pair_re.findall(item):
         if raw.startswith('"') and raw.endswith('"'):
             value = raw[1:-1]                     # strip the quotes
+        elif raw.startswith("[") and raw.endswith("]"):
+            inner = raw[1:-1]
+            value = [
+                tok.strip().strip("'\"")          # clean each member
+                for tok in inner.split(",")
+                if tok.strip()
+            ]
         elif raw.startswith("{") and raw.endswith("}"):
             inner = raw[1:-1]
             value = {
@@ -537,6 +546,7 @@ def _parse_kv(item):
             value = raw
         out[key] = value
     return out
+
 
 def parse_files(sections):
     """Turn the 'Files' section (list of strings) into a list of dicts."""

@@ -747,8 +747,9 @@ def dialog_run_workflow(md_text):
 
 	# for filereqinx,filereq in enumerate(md_text["Files"]):
 	uploadfile_properties=fo.parse_files(md_text)
-	for filereq in uploadfile_properties:
-		NHPPK_file=st.file_uploader("PK",key=filereq["name"],type=filereq["format"])
+	FILES=[None for i in range(len(uploadfile_properties))]
+	for fileinx,filereq in enumerate(uploadfile_properties):
+		FILES[fileinx] = st.file_uploader(filereq["name"],key=filereq["name"],type=filereq["format"])
 		st.text(f"Note: Ensure the data contains {','.join(filereq['contains'])} columns")
 
 	workflow=md_text["Tasks"]
@@ -756,42 +757,46 @@ def dialog_run_workflow(md_text):
 	workflow_editable=("\n").join(workflow_listed)
 	tasks=st.text_area(label="Tasks",value=workflow_editable,height="content")
 
-	if st.button("Run"):
-		st.toast("Yaay!")
-
-
 	progressbar=st.empty()
 
-	if st.button("Create",type="primary"):
-		df_NHPPK=pd.DataFrame({
-				'Group': [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3],
-				 'Dose_mg': [3,3,3,3,3,3,3,9,9,9,9,9,9,9,30,30,30,30,30,30,30],
-				 'Time': [0.0, 0.3, 0.9, 2.9, 3.9, 6.8, 14.1, 0.1, 0.5, 0.9, 2.9, 4.1, 6.9, 14.0, 0.2, 0.4, 0.9, 2.9, 4.0, 7.1, 14.0],
-				 'ADCcc_ugml': [42.2, 27.7, 15.6, 5.9, 4.7, 2.1, 0.6, 87.7, 57.7, 42.1, 18.2, 15.5, 6.2, 1.8, 360.3, 249.7, 164.2, 69.0, 50.3, 37.5, 11.7],
-				 'Concentration_nM': [275.7, 181.3, 101.8, 38.5, 30.4, 13.8, 4.0, 573.4, 377.0, 275.2, 118.7, 101.3, 40.3, 11.6, 2355.0, 1632.2, 1073.0, 450.9, 328.7, 245.2, 76.6]
-				 })
-		runaction_updatedb(1,f"upload Cyno_PK_demo.csv","upload",{"data":df_NHPPK})
-		# else:
-		# 	df_NHPPK=pd.read_csv(NHPPK_file)
-		# 	runaction_updatedb(1,f"upload {NHPPK_file}","upload",{"data":df_NHPPK})
+	if st.button("Run",type="primary"):
+		# Check all the files are uploaded
 
-		modelstr=model_io.save_model_to_string(model=modelobj)
-		st.session_state["statedb"].append(modelstr)
-		st.session_state["curmodelstate"]=len(st.session_state["statedb"])-1
+		if any(f==None for f in FILES):
+			st.toast("Please upload all the files")
+		else:
+			# df_NHPPK=pd.DataFrame({
+			# 		'Group': [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3],
+			# 		 'Dose_mg': [3,3,3,3,3,3,3,9,9,9,9,9,9,9,30,30,30,30,30,30,30],
+			# 		 'Time': [0.0, 0.3, 0.9, 2.9, 3.9, 6.8, 14.1, 0.1, 0.5, 0.9, 2.9, 4.1, 6.9, 14.0, 0.2, 0.4, 0.9, 2.9, 4.0, 7.1, 14.0],
+			# 		 'ADCcc_ugml': [42.2, 27.7, 15.6, 5.9, 4.7, 2.1, 0.6, 87.7, 57.7, 42.1, 18.2, 15.5, 6.2, 1.8, 360.3, 249.7, 164.2, 69.0, 50.3, 37.5, 11.7],
+			# 		 'Concentration_nM': [275.7, 181.3, 101.8, 38.5, 30.4, 13.8, 4.0, 573.4, 377.0, 275.2, 118.7, 101.3, 40.3, 11.6, 2355.0, 1632.2, 1073.0, 450.9, 328.7, 245.2, 76.6]
+			# 		 })
+			# runaction_updatedb(1,f"upload Cyno_PK_demo.csv","upload",{"data":df_NHPPK})
+			# else:
+			
+			for fileinx,filereq in enumerate(uploadfile_properties):		
+				df_f=pd.read_csv(FILES[fileinx])
+				msg=runaction_updatedb(1,f"upload {filereq['name']}","upload",{"data":df_f})
+				st.session_state["chatdb"].append(msg)
 
-		# Run Tasks
-		tasks_list=tasks.split("\n")
-		for taskinx,task in enumerate(tasks_list):
-			task=task.lstrip(f"{taskinx+1}. ")
-			action,actionparams=fo.parseuserinput(task)
-			msg=runaction_updatedb(3+taskinx,task,action,actionparams)
-			st.session_state["chatdb"].append(msg)
+			modelstr=model_io.save_model_to_string(model=modelobj)
+			st.session_state["statedb"].append(modelstr)
+			st.session_state["curmodelstate"]=len(st.session_state["statedb"])-1
 
-			if taskinx%3==0:
-				progress_percent=math.floor(100*(taskinx+1)/len(tasks_list))
-				progressbar.progress(progress_percent,text=f"Progress: {progress_percent}%")
+			# Run Tasks
+			tasks_list=tasks.split("\n")
+			for taskinx,task in enumerate(tasks_list):
+				task=task.lstrip(f"{taskinx+1}. ")
+				action,actionparams=fo.parseuserinput(task)
+				msg=runaction_updatedb(2+taskinx,task,action,actionparams)
+				st.session_state["chatdb"].append(msg)
 
-		st.rerun()
+				if taskinx%3==0:
+					progress_percent=math.floor(100*(taskinx+1)/len(tasks_list))
+					progressbar.progress(progress_percent,text=f"Progress: {progress_percent}%")
+
+			st.rerun()
 
 
 @st.dialog("Equations",width="large")

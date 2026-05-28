@@ -6,8 +6,7 @@
 * $[Drugcc]=[Drugca]/Values[V1].InitialValue$
 
 # Files
-* name="NHPPK_file" contains={'Time_days', 'Concentration_nM', 'Dose_mg'} format=".csv"
-* name="MousePK_file" contains={'Time_days', 'Concentration_nM', 'Dose_mg'} format=".csv"
+* name="NHPPK_file" contains=['Time', 'Concentration_nM', 'Dose_mg'] format=".csv"
 
 # Tasks
 * section: Data Visualization
@@ -26,4 +25,3 @@
 * simulate dose_species=Drugca dose=4666.67 interval=14 simulationtime=180
 * simulate dose_species=Drugca dose=9333.34 interval=14 simulationtime=180
 * plot dataid=[8,9,10,11] xdata=['Time','Time','Time','Time'] ydata=['Drugcc','Drugcc','Drugcc','Drugcc'] plotstyle=['-','-','-','-'] legend=['1mpk','5mpk','10mpk','20mpk'] title='Human PK' xlabel='Time (days)' ylabel='Plasma concentration (nM)' yscale='linear' axeslimits=[0,180,0,1e04]
-
