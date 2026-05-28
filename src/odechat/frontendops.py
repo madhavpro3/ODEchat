@@ -2,8 +2,8 @@
 # Like - parsing user input to call the right tools and parameters
 import databaseops as do
 import modelops as mo
-# from basico import model_io,model_info
 import re
+from pathlib import Path
 from scipy import integrate
 import ast
 import streamlit as st
@@ -453,4 +453,115 @@ def find_metric(metric_name,df_full,t,species_dict):
 	# lsaresults = {"lsa_output":,"metric":,"ishigherbetter":}
 	# paramtables=[df1,df2], df-> name,value,unit
 	# metricresults=
+
+## --------------------- Parsing Workflow in MD files --------------------------------
+"""
+Read a markdown file and extract the content under each section header
+('#', '##', ...) as a Python list of items.
+
+Each line starting with '*' is treated as a list item (the leading '*'
+is stripped). A non-'*' line that follows an item is appended to that
+item as a continuation. Any '$' characters are removed (so equations
+come back clean).
+
+Returns a dict mapping section title -> list[str].
+"""
+def extract_sections(md_text, max_level=6):
+    """Parse markdown text into {section_title: [item, item, ...]}."""
+    header_re = re.compile(r'^(#{1,%d})\s+(.*?)\s*#*\s*$' % max_level)
+    lines = md_text.splitlines()
+
+    # Locate every header: (level, title, line_index).
+    headers = []
+    for i, line in enumerate(lines):
+        m = header_re.match(line)
+        if m:
+            headers.append((len(m.group(1)), m.group(2).strip(), i))
+
+    sections = {}
+    for idx, (level, title, start) in enumerate(headers):
+        # Section ends at the next header of same-or-higher level.
+        end = len(lines)
+        for level2, _t2, start2 in headers[idx + 1:]:
+            if level2 <= level:
+                end = start2
+                break
+
+        sections[title] = _lines_to_items(lines[start + 1:end])
+
+    return sections
+
+
+def _lines_to_items(body_lines):
+    """Turn the lines of one section into a list of items."""
+    items = []
+    for line in body_lines:
+        clean = line.replace("$", "").rstrip()  # drop math delimiters
+        if not clean.strip():
+            continue  # skip blank lines
+
+        stripped = clean.lstrip()
+        if stripped.startswith("*"):
+            # New list item: remove the leading '*' and surrounding space.
+            items.append(stripped[1:].strip())
+        elif items:
+            # Orphan line: attach to the previous item as a continuation.
+            items[-1] = (items[-1] + " " + stripped.strip()).strip()
+        else:
+            # Text before any bullet in this section.
+            items.append(stripped.strip())
+    return items
+
+def _parse_kv(item):
+    """
+    Parse one 'key=value key=value ...' item into a dict.
+ 
+    Values may be a double-quoted string ("foo"), a bracket list
+    (['a', 'b']), a brace set ({'a', 'b'}), or a bare token.
+    Quoted strings come back as str, bracket lists come back as a
+    Python list (order preserved), brace sets as a set, everything
+    else as str.
+    """
+    # key= followed by "..." , [...] , {...} , or a run of non-space chars.
+    pair_re = re.compile(r'(\w+)=("[^"]*"|\[[^\]]*\]|\{[^}]*\}|\S+)')
+    out = {}
+    for key, raw in pair_re.findall(item):
+        if raw.startswith('"') and raw.endswith('"'):
+            value = raw[1:-1]                     # strip the quotes
+        elif raw.startswith("[") and raw.endswith("]"):
+            inner = raw[1:-1]
+            value = [
+                tok.strip().strip("'\"")          # clean each member
+                for tok in inner.split(",")
+                if tok.strip()
+            ]
+        elif raw.startswith("{") and raw.endswith("}"):
+            inner = raw[1:-1]
+            value = {
+                tok.strip().strip("'\"")          # clean each member
+                for tok in inner.split(",")
+                if tok.strip()
+            }
+        else:
+            value = raw
+        out[key] = value
+    return out
+
+
+def parse_files(sections):
+    """Turn the 'Files' section (list of strings) into a list of dicts."""
+    return [_parse_kv(item) for item in sections.get("Files", [])]
+
+def parse_repassignemnts(sections):
+	outputdict={}
+	for repassgn in sections["RepeatedAssignments"]:
+		speciesname,expr=repassgn.split("=")
+		outputdict[speciesname[1:-1]]=expr
+
+	return outputdict
+
+def extract_sections_from_file(path, encoding="utf-8", **kwargs):
+    """Read a markdown file from disk and return its sections dict."""
+    text = Path(path).read_text(encoding=encoding)
+    return extract_sections(text, **kwargs)
 
