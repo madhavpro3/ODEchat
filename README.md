@@ -25,10 +25,11 @@ Following examples are in the examples folder
 
 ***
 
-## Capabilities (v0.1)
+## Capabilities
 * Simulation
 * Plotting
 * Cailbration
 * Updating parameters -> Creates a new model state
 * Re-visiting prior model states
 * Save the project analysis as a chat. This can be re-loaded and continued where it is left off.
+* Read a workflow from an md file
