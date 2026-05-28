@@ -6,3 +6,4 @@ compose.yaml
 __pycache__/*
 *.txt
 venvodechat/
+src/referencemolecules/pkparams_WIP.csv

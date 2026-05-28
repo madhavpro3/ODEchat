@@ -1,0 +1,5 @@
+﻿Target,Molecule,Name,V1_L,V2_L,CL_L/d,Q1_L/d,source
+HER2,TDXD,Trastuzumab Deruxtecan,2.77,5.16,0.421,0.199,doi: 10.1002/cpt.2096
+TROP2,TROP2SN38,Sacituzumab Govitecan,2.77,0.908,0.133,0.006,doi: 10.1007/s40262-024-01366-3
+HER2,TDM1,Trastuzumab Emtacine,3.127,0.66,0.676,1.534, doi: 10.1007/s00280-014-2500-2
+TF,TFMMAE,Tisotumab Vedotin,3.1,4.47,1.42,4.01,https://doi.org/10.1002/psp4.12850
